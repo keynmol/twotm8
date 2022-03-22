@@ -1,0 +1,45 @@
+{
+  "listeners": {
+    "*:8080": {
+      "pass": "routes"
+    }
+  },
+  "routes": [
+    {
+      "match": {
+        "uri": "/api/*"
+      },
+      "action": {
+        "pass": "applications/app"
+      }
+    },
+    {
+      "match": {
+        "uri": "~^((/(.*)\\.(js|css|html))|/)$"
+      },
+      "action": {
+        "share": "/www/static$uri"
+      }
+    },
+    {
+      "action": {
+        "share": "/www/static/index.html"
+      }
+    }
+  ],
+  "applications": {
+    "app": {
+      "processes": {
+        "max": 50,
+        "spare": 2,
+        "idle_timeout": 180
+      },
+      "type": "external",
+      "executable": "/usr/bin/twotm8",
+      "limits": {
+        "timeout": 1,
+        "requests": 1000
+      }
+    }
+  }
+}
