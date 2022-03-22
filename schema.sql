@@ -5,7 +5,7 @@ CREATE TABLE thought_leaders(
   UNIQUE(nickname)
 );
 -----
-CREATE INDEX thought_leaders_nickname_idx ON thought_leaders(nickname);
+CREATE UNIQUE INDEX thought_leaders_nickname_idx ON thought_leaders (LOWER(nickname));
 -----
 CREATE TABLE twots(
   twot_id uuid primary key,

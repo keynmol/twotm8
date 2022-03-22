@@ -186,7 +186,7 @@ object DB:
 
     private lazy val get_thought_leader_credentials_prepared =
       db.prepare(
-        "select thought_leader_id, salted_hash from thought_leaders where nickname = $1::varchar",
+        "select thought_leader_id, salted_hash from thought_leaders where lower(nickname) = lower($1::varchar)",
         "get_thought_leader",
         varchar.wrap(Nickname)
       ).getOrThrow
@@ -200,7 +200,7 @@ object DB:
 
     private val get_thought_leader_by_nickname =
       db.prepare(
-        "select thought_leader_id from thought_leaders where nickname = $1",
+        "select thought_leader_id from thought_leaders where lower(nickname) = lower($1)",
         "get_thought_leader_by_nickname",
         varchar.wrap(Nickname)
       ).getOrThrow
@@ -310,7 +310,7 @@ object DB:
       db.prepare(
         """
         insert into thought_leaders(thought_leader_id, nickname, salted_hash) 
-                  values (gen_random_uuid(), $1, $2) 
+                  values (gen_random_uuid(), lower($1), $2) 
                   on conflict do nothing
                   returning thought_leader_id
                   """,
