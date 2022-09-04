@@ -159,7 +159,7 @@ class Api(app: App):
       end if
     }
 
-  private val delete_twot: ArgsHandler[Authenticated[UUID]] = (req, uuid) => 
+  private val delete_twot: ArgsHandler[Authenticated[UUID]] = (req, uuid) =>
     val authorId = uuid.auth.author
     val twotId = TwotId(uuid.value)
 

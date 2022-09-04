@@ -69,7 +69,7 @@ object DB:
     def create_twot(authorId: AuthorId, text: Text): Option[TwotId] =
       one(create_twot_prepared, authorId -> text, uuid.wrap(TwotId))
 
-    def delete_twot(authorId: AuthorId, twotId: TwotId): Unit = 
+    def delete_twot(authorId: AuthorId, twotId: TwotId): Unit =
       exec(delete_twot_prepared, authorId -> twotId)
 
     def register(nickname: Nickname, pass: HashedPassword): Option[AuthorId] =
