@@ -8,7 +8,7 @@ object codecs:
       rw: ReadWriter[X]
   ): ReadWriter[T] =
     rw.bimap(obj.value(_), obj.apply(_))
-  
+
   // primitive types
   given ReadWriter[AuthorId] = opaqValue(AuthorId)
   given ReadWriter[Follower] = opaqValue(Follower)
@@ -38,7 +38,7 @@ object codecs:
     macroR[api.Payload.Register]
   given Reader[api.Payload.Follow] =
     macroR[api.Payload.Follow]
-  
+
   given ReadWriter[Health.DB] = opaqValue(Health.DB)
   given ReadWriter[Health] = upickle.default.macroRW[Health]
 end codecs

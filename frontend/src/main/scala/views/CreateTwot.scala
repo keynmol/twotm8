@@ -9,7 +9,9 @@ import scala.scalajs.js.Date
 
 import ApiClient.*
 
-def CreateTwot(update: () => Unit)(using router: Router[Page], state: AppState) =
+def CreateTwot(
+    update: () => Unit
+)(using router: Router[Page], state: AppState) =
   val error = Var[Option[String]](None)
 
   val text = Var("")
