@@ -41,7 +41,10 @@ object Page:
     },
     serializePage = pg => upickle.default.writeJs(pg).render(),
     deserializePage = str => upickle.default.read[Page](str)
-  )($popStateEvent = L.windowEvents.onPopState, owner = L.unsafeWindowOwner)
+  )(
+    $popStateEvent = L.windowEvents.onPopState,
+    owner = L.unsafeWindowOwner
+  )
 end Page
 
 def navigateTo(page: Page)(using router: Router[Page]): Binder[HtmlElement] =
