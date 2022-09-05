@@ -9,12 +9,12 @@ import java.nio.file.Paths
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
 val Versions = new {
-  val Scala = "3.1.1"
+  val Scala = "3.1.3"
   val SNUnit = "0.0.15"
   val upickle = "1.5.0"
   val scribe = "3.8.1"
   val Laminar = "0.14.2"
-  val scalajsDom = "2.1.0"
+  val scalajsDom = "2.3.0"
   val waypoint = "0.5.0"
   val scalacss = "1.0.0"
 }
