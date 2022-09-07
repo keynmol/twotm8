@@ -8,7 +8,14 @@ RUN apt update && apt install -y curl && \
     apt install -y lsb-release wget software-properties-common gnupg && \
     ./llvm.sh 13 && \
     apt update && \
-    apt install -y zip unzip tar make cmake autoconf pkg-config libclang-13-dev git
+    apt install -y zip unzip tar make cmake autoconf pkg-config libclang-13-dev git && \
+    # install Unit, OpenSSL and Unit development headers
+    curl --output /usr/share/keyrings/nginx-keyring.gpg  \
+      https://unit.nginx.org/keys/nginx-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/debian/ bullseye unit" >> /etc/apt/sources.list.d/unit.list && \
+    echo "deb-src [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/debian/ bullseye unit" >> /etc/apt/sources.list.d/unit.list && \
+    apt update && \
+    apt install -y unit-dev
 
 ENV LLVM_BIN "/usr/lib/llvm-13/bin"
 ENV CC "/usr/lib/llvm-13/bin/clang"
