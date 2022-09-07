@@ -20,7 +20,7 @@ RUN apt update && \
     echo "deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/debian/ bullseye unit" >> /etc/apt/sources.list.d/unit.list && \
     echo "deb-src [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/debian/ bullseye unit" >> /etc/apt/sources.list.d/unit.list && \
     apt update && \
-    apt install -y unit-dev libssl-dev
+    apt install -y unit-dev libssl-dev zip unzip tar 
 
 ENV LLVM_BIN "/usr/lib/llvm-13/bin"
 
