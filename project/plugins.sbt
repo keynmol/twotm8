@@ -8,7 +8,7 @@ addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.4.7")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.10.1")
 
 val VcpkgVersion =
-  sys.env.getOrElse("SBT_VCPKG_VERSION", "0.0.6")
+  sys.env.getOrElse("SBT_VCPKG_VERSION", "0.0.6+16-6c85d0c2-SNAPSHOT")
 
 resolvers += Resolver.sonatypeRepo("snapshots")
 
