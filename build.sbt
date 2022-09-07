@@ -17,6 +17,8 @@ val Versions = new {
   val scalacss = "1.0.0"
 }
 
+lazy val root = project.in(file(".")).aggregate(frontend, app, demoApp)
+
 lazy val manage =
   project
     .in(file("manage"))
@@ -106,7 +108,7 @@ lazy val bindings =
       resolvers += Resolver.sonatypeRepo("snapshots"),
       // Generate bindings to Postgres main API
       vcpkgDependencies := Set("libpq", "openssl"),
-      bindgenBindings ++= Seq(
+      Compile / bindgenBindings ++= Seq(
         Binding(
           vcpkgManager.value.includes("libpq") / "libpq-fe.h",
           "libpq",
