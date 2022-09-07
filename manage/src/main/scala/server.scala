@@ -9,8 +9,21 @@ import java.util.UUID
 import roach.*
 import openssl.OpenSSL
 
+def connection_string() =
+  sys.env.getOrElse(
+    "DATABASE_URL", {
+      val host = sys.env.getOrElse("PG_HOST", "localhost")
+      val port = sys.env.getOrElse("PG_PORT", "5432")
+      val password = sys.env.getOrElse("PG_PASSWORD", "mysecretpassword")
+      val user = sys.env.getOrElse("PG_USER", "postgres")
+      val db = sys.env.getOrElse("PG_DB", "postgres")
+
+      s"postgresql://$user:$password@$host:$port/$db"
+    }
+  )
+
 @main def launch(cmd: String) =
-  val postgres = Database.connection_string()
+  val postgres = connection_string()
 
   Zone { implicit z =>
     Using.resource(Database(postgres).getOrThrow) { db =>
