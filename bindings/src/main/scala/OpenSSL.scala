@@ -1,26 +1,28 @@
 package openssl
 
+import openssl.functions.*
+import openssl.types.*
+
 import scala.scalanative.unsafe.*
+import scala.scalanative.unsigned.*
 import scala.scalanative.libc.*
 import java.util.Base64
 
 @extern
-@link("crypto")
-private[openssl] object Crypto:
+object Crypto:
   def get_EVP_MAC_KEY(): CInt = extern
 
   def get_EVP_MAX_MD_SIZE(): CInt = extern
 
   def get_OpenSSL_add_all_digests(): Unit = extern
 
+import Crypto.*
+
 object OpenSSL:
   val SHA256_DIGEST_LENGTH = 32
   private val enc = Base64.getUrlEncoder().withoutPadding()
 
   def sha256(plaintext: String)(using Zone): String =
-    import libcrypto.functions.*
-    import libcrypto.types.*
-
     val str = toCString(plaintext)
     val sha256_ctx = stackalloc[SHA256_CTX](1)
     val hash = stackalloc[CUnsignedChar](SHA256_DIGEST_LENGTH)
@@ -31,7 +33,7 @@ object OpenSSL:
       "failed to initialise sha context"
     )
     assert(
-      SHA256_Update(sha256_ctx, str, string.strlen(str)) == 1,
+      SHA256_Update(sha256_ctx, str, string.strlen(str).asInstanceOf[size_t]) == 1,
       "failed to update sha context"
     )
     assert(
@@ -47,8 +49,6 @@ object OpenSSL:
   end sha256
 
   def hmac(plaintext: String, key: String)(using Zone) =
-    import libhmac.functions.*
-    import libhmac.types.*
     val message = toCString(plaintext)
     val ckey = toCString(key)
     val mdctx = EVP_MD_CTX_new()
@@ -62,18 +62,18 @@ object OpenSSL:
     assert(pkey != null, "EVP PKEY is null")
     assert(mdctx != null, "EVP ctx is null")
 
-    val md_len = stackalloc[libhmac.types.size_t](1)
+    val md_len = stackalloc[size_t](1)
 
     assert(EVP_DigestSignInit(mdctx, null, EVP_sha256(), null, pkey) == 1)
-    assert(EVP_DigestUpdate(mdctx, message, string.strlen(message)) == 1)
+    assert(EVP_DigestUpdate(mdctx, message, string.strlen(message).asInstanceOf[size_t]) == 1)
     assert(EVP_DigestSignFinal(mdctx, null, md_len) == 1)
-    val md_value = stackalloc[CUnsignedChar](!md_len)
+    val md_value = stackalloc[CUnsignedChar]((!md_len).asInstanceOf[ULong])
 
     assert(EVP_DigestSignFinal(mdctx, md_value, md_len) == 1)
 
     val ar = Array.newBuilder[Byte]
 
-    for i <- 0 until (!md_len).toInt do ar.addOne(md_value(i).toByte)
+    for i <- 0 until (!md_len).asInstanceOf[ULong].toInt do ar.addOne(md_value(i).toByte)
 
     EVP_MD_CTX_free(mdctx)
 

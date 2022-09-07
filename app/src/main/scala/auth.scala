@@ -5,8 +5,8 @@ import scala.scalanative.libc.*
 
 import scala.util.Using
 import java.util.UUID
-import libcrypto.functions.*
-import libcrypto.types.*
+import openssl.functions.*
+import openssl.types.*
 import java.time.Instant
 import scala.concurrent.duration.*
 import scala.scalanative.posix.time
