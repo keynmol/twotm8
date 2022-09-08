@@ -16,6 +16,7 @@ import scala.scalajs.js
 import scala.scalajs.js.JSON
 import scala.scalajs.js.Promise
 import twotm8.frontend.Responses.ThoughtLeaderProfile
+import org.scalajs.dom.RequestInit
 
 object ApiClient extends ApiClient(using Stability())
 
@@ -74,9 +75,9 @@ class ApiClient(using Stability):
   def login(
       payload: Payloads.Login
   ): Future[Either[String, Responses.TokenResponse]] =
-    val req = new RequestInit:
-      override val method = HttpMethod.POST
-      override val body = toJsonString(payload)
+    val req = new RequestInit {}
+    req.method = HttpMethod.POST
+    req.body = toJsonString(payload)
 
     exponentialFetch(s"/api/auth/login", req, forceRetry = true)
       .flatMap { resp =>
@@ -88,9 +89,9 @@ class ApiClient(using Stability):
   end login
 
   def register(payload: Payloads.Register): Future[Option[String]] =
-    val req = new RequestInit:
-      override val method = HttpMethod.PUT
-      override val body = toJsonString(payload)
+    val req = new RequestInit {}
+    req.method = HttpMethod.PUT
+    req.body = toJsonString(payload)
 
     exponentialFetch(s"/api/auth/register", req)
       .flatMap { resp =>
@@ -101,9 +102,9 @@ class ApiClient(using Stability):
   end register
 
   def create(payload: Payloads.Create, token: Token) =
-    val req = new RequestInit:
-      override val method = HttpMethod.POST
-      override val body = toJsonString(payload)
+    val req = new RequestInit {}
+    req.method = HttpMethod.POST
+    req.body = toJsonString(payload)
 
     exponentialFetch(s"/api/twots/create", addAuth(req, token))
       .authenticated { resp =>
@@ -114,8 +115,8 @@ class ApiClient(using Stability):
   end create
 
   def delete_twot(id: String, token: Token) =
-    val req = new RequestInit:
-      override val method = HttpMethod.DELETE
+    val req = new RequestInit {}
+    req.method = HttpMethod.DELETE
 
     exponentialFetch(s"/api/twots/$id", addAuth(req, token))
       .authenticated(resp => Future.successful(resp.ok))
@@ -125,9 +126,9 @@ class ApiClient(using Stability):
       state: Boolean,
       token: Token
   ) =
-    val req = new RequestInit:
-      override val method = if state then HttpMethod.PUT else HttpMethod.DELETE
-      override val body = toJsonString(payload)
+    val req = new RequestInit {}
+    req.method = if state then HttpMethod.PUT else HttpMethod.DELETE
+    req.body = toJsonString(payload)
 
     exponentialFetch(s"/api/twots/uwotm8", addAuth(req, token))
       .authenticated { resp =>
@@ -142,9 +143,9 @@ class ApiClient(using Stability):
       state: Boolean,
       token: Token
   ) =
-    val req = new RequestInit:
-      override val method = if state then HttpMethod.PUT else HttpMethod.DELETE
-      override val body = toJsonString(payload)
+    val req = new RequestInit {}
+    req.method = if state then HttpMethod.PUT else HttpMethod.DELETE
+    req.body = toJsonString(payload)
 
     exponentialFetch(s"/api/thought_leaders/follow", addAuth(req, token))
       .authenticated { resp =>

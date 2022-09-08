@@ -1,8 +1,16 @@
 val BindgenVersion =
-  sys.env.getOrElse("SN_BINDGEN_VERSION", "0.0.8")
+  sys.env.getOrElse("SN_BINDGEN_VERSION", "0.0.13+21-8c00bb3f-SNAPSHOT")
 
 resolvers += Resolver.sonatypeRepo("snapshots")
 
 addSbtPlugin("com.indoorvivants" % "bindgen-sbt-plugin" % BindgenVersion)
 addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.4.7")
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.9.0")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.10.1")
+
+val VcpkgVersion =
+  sys.env.getOrElse("SBT_VCPKG_VERSION", "0.0.6+16-6c85d0c2-SNAPSHOT")
+
+resolvers += Resolver.sonatypeRepo("snapshots")
+
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.6")
+addSbtPlugin("com.indoorvivants.vcpkg" % "sbt-vcpkg" % VcpkgVersion)

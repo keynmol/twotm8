@@ -101,7 +101,6 @@ object Database:
       res
     else Right(conn)
 
-
   import Validated.*
   import Result.given
 

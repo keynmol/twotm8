@@ -2,29 +2,33 @@ import bindgen.interface.Binding
 import scala.scalanative.build.Mode
 import scala.scalanative.build.LTO
 import scala.sys.process
-import bindgen.interface.Platform
-import bindgen.interface.LogLevel
 import java.nio.file.Paths
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
 val Versions = new {
-  val Scala = "3.1.3"
+  val Scala = "3.2.0"
   val SNUnit = "0.0.15"
-  val upickle = "1.5.0"
-  val scribe = "3.8.1"
+  val upickle = "2.0.0"
+  val scribe = "3.10.3"
   val Laminar = "0.14.2"
   val scalajsDom = "2.3.0"
   val waypoint = "0.5.0"
   val scalacss = "1.0.0"
 }
 
+lazy val root = project.in(file(".")).aggregate(frontend, app, demoApp)
+
 lazy val manage =
   project
     .in(file("manage"))
-    .dependsOn(postgres, openssl)
-    .configure(config)
+    .enablePlugins(ScalaNativePlugin, VcpkgPlugin)
+    .dependsOn(bindings)
+    .settings(environmentConfiguration)
+    .settings(vcpkgNativeConfig())
     .settings(
+      scalaVersion := Versions.Scala,
+      vcpkgDependencies := Set("libpq", "openssl"),
       libraryDependencies += "com.outr" %%% "scribe" % Versions.scribe,
       libraryDependencies += "com.lihaoyi" %%% "upickle" % Versions.upickle
     )
@@ -48,10 +52,13 @@ lazy val frontend =
 lazy val app =
   project
     .in(file("app"))
-    .dependsOn(postgres, openssl)
-    .configure(config)
+    .dependsOn(bindings)
+    .enablePlugins(ScalaNativePlugin, VcpkgPlugin)
+    .settings(environmentConfiguration)
+    .settings(vcpkgNativeConfig())
     .settings(
-      testOptions += Tests.Argument(TestFrameworks.JUnit, "-a", "-s", "-v"),
+      scalaVersion := Versions.Scala,
+      vcpkgDependencies := Set("libpq", "openssl"),
       libraryDependencies += "com.outr" %%% "scribe" % Versions.scribe,
       libraryDependencies += "com.lihaoyi" %%% "upickle" % Versions.upickle,
       libraryDependencies += "com.github.lolgab" %%% "snunit" % Versions.SNUnit,
@@ -68,10 +75,13 @@ lazy val app =
 lazy val demoApp =
   project
     .in(file("demo-app"))
-    .dependsOn(postgres, openssl)
-    .configure(config)
+    .enablePlugins(ScalaNativePlugin, VcpkgPlugin)
+    .dependsOn(bindings)
+    .settings(environmentConfiguration)
+    .settings(vcpkgNativeConfig())
     .settings(
-      nativeLinkStubs := false,
+      scalaVersion := Versions.Scala,
+      vcpkgDependencies := Set("libpq", "openssl"),
       libraryDependencies += "com.outr" %%% "scribe" % Versions.scribe,
       libraryDependencies += "com.lihaoyi" %%% "upickle" % Versions.upickle,
       libraryDependencies += "com.github.lolgab" %%% "snunit" % Versions.SNUnit,
@@ -82,142 +92,41 @@ lazy val demoApp =
       )
     )
 
-def config(p: Project) = {
-  p.enablePlugins(ScalaNativePlugin, ScalaNativeJUnitPlugin)
-    .settings(scalaVersion := Versions.Scala)
-    .settings(nativeConfig ~= { conf =>
-      conf
-        .withLinkingOptions(
-          conf.linkingOptions ++
-            postgresLib.toList.map("-L" + _) ++
-            opensslLib.toList.map("-L" + _) ++
-            List("-lcrypto")
-        )
-        .withCompileOptions(
-          conf.compileOptions ++
-            List(opensslInclude).map("-I" + _)
-        )
-    })
-    .settings(nativeConfig := {
-      val conf = nativeConfig.value
-      if (sys.env.get("SN_RELEASE").contains("fast"))
-        conf.withOptimize(true).withLTO(LTO.thin).withMode(Mode.releaseFast)
-      else conf
-    })
-}
+lazy val environmentConfiguration = Seq(nativeConfig := {
+  val conf = nativeConfig.value
+  if (sys.env.get("SN_RELEASE").contains("fast"))
+    conf.withOptimize(true).withLTO(LTO.thin).withMode(Mode.releaseFast)
+  else conf
+})
 
-lazy val postgres =
+lazy val bindings =
   project
-    .in(file("postgres"))
-    .enablePlugins(ScalaNativePlugin, BindgenPlugin)
+    .in(file("bindings"))
+    .enablePlugins(ScalaNativePlugin, BindgenPlugin, VcpkgPlugin)
     .settings(
       scalaVersion := Versions.Scala,
       resolvers += Resolver.sonatypeRepo("snapshots"),
       // Generate bindings to Postgres main API
-      bindgenBindings +=
+      vcpkgDependencies := Set("libpq", "openssl"),
+      Compile / bindgenBindings ++= Seq(
         Binding(
-          postgresInclude.resolve("libpq-fe.h").toFile(),
+          vcpkgManager.value.includes("libpq") / "libpq-fe.h",
           "libpq",
           linkName = Some("pq"),
           cImports = List("libpq-fe.h"),
-          clangFlags = List(
-            "-std=gnu99",
-            s"-I$postgresInclude",
-            "-fsigned-char"
-          )
+          clangFlags = vcpkgConfigurator.value
+            .updateCompilationFlags(List("-std=gnu99"), "libpq")
+            .toList
         ),
-      nativeConfig ~= { conf =>
-        conf.withLinkingOptions(
-          conf.linkingOptions ++ postgresLib.toList.map("-L" + _)
+        Binding(
+          (Compile / baseDirectory).value / "openssl-amalgam.h",
+          "openssl",
+          cImports = List("openssl/sha.h", "openssl/evp.h"),
+          clangFlags = List("-I" + vcpkgManager.value.includes("openssl"))
         )
-      }
+      )
     )
-
-lazy val openssl =
-  project
-    .in(file("openssl"))
-    .enablePlugins(ScalaNativePlugin, BindgenPlugin)
-    .settings(
-      scalaVersion := Versions.Scala,
-      resolvers += Resolver.sonatypeRepo("snapshots"),
-      // Generate bindings to Postgres main API
-      bindgenBindings := {
-        Seq(
-          Binding(
-            opensslHeader("openssl/sha.h").toFile(),
-            "libcrypto",
-            linkName = Some("crypto"),
-            cImports = List("openssl/sha.h"),
-            clangFlags = List(
-              "-std=gnu99",
-              s"-I$opensslInclude",
-              "-fsigned-char"
-            )
-          ),
-          Binding(
-            opensslHeader("openssl/evp.h").toFile(),
-            "libhmac",
-            linkName = Some("crypto"),
-            cImports = List("openssl/evp.h"),
-            clangFlags = List(
-              "-std=gnu99",
-              s"-I$opensslInclude",
-              "-fsigned-char"
-            )
-          )
-        )
-      },
-      nativeConfig ~= { conf =>
-        conf.withLinkingOptions(
-          conf.linkingOptions ++ opensslLib.toList.map("-L" + _)
-        )
-      }
-    )
-
-def postgresInclude = {
-  import Platform.*
-  (os, arch) match {
-    case (OS.Linux, _) => Paths.get("/usr/include/postgresql/")
-    case (OS.MacOS, Arch.aarch64) =>
-      Paths.get("/opt/homebrew/opt/libpq/include/")
-    case (OS.MacOS, Arch.x86_64) => Paths.get("/usr/local/opt/libpq/include/")
-  }
-}
-
-def postgresLib = {
-  import Platform.*
-  (os, arch) match {
-    case (OS.MacOS, Arch.aarch64) =>
-      Some(Paths.get("/opt/homebrew/opt/libpq/lib/"))
-    case (OS.MacOS, Arch.x86_64) =>
-      Some(Paths.get("/usr/local/opt/libpq/lib/"))
-    case _ => None
-  }
-}
-
-def opensslHeader(filename: String) = {
-  opensslInclude.resolve(filename)
-}
-
-def opensslInclude = {
-  import Platform.*
-  (os, arch) match {
-    case (OS.Linux, _) => Paths.get("/usr/include/")
-    case (OS.MacOS, Arch.aarch64) =>
-      Paths.get("/opt/homebrew/opt/openssl/include/")
-  }
-}
-
-def opensslLib = {
-  import Platform.*
-  (os, arch) match {
-    case (OS.MacOS, Arch.aarch64) =>
-      Some(Paths.get("/opt/homebrew/opt/openssl/lib/"))
-    case (OS.Linux, Arch.x86_64) =>
-      Some(Paths.get("/lib/x86_64-linux-gnu/"))
-    case _ => None
-  }
-}
+    .settings(vcpkgNativeConfig())
 
 val buildApp = taskKey[Unit]("")
 buildApp := {
@@ -288,3 +197,67 @@ buildFrontend := {
 
   restartLocalUnit
 }
+
+def vcpkgNativeConfig(rename: String => String = identity) = Seq(
+  nativeConfig := {
+    import com.indoorvivants.detective.Platform
+    val configurator = vcpkgConfigurator.value
+    val manager = vcpkgManager.value
+    val conf = nativeConfig.value
+    val deps = vcpkgDependencies.value.toSeq.map(rename)
+
+    val files = deps.map(d => manager.files(d))
+
+    val compileArgsApprox = files.flatMap { f =>
+      List("-I" + f.includeDir.toString)
+    }
+    val linkingArgsApprox = files.flatMap { f =>
+      List("-L" + f.libDir) ++ f.staticLibraries.map(_.toString)
+    }
+
+    import scala.util.control.NonFatal
+
+    def updateLinkingFlags(current: Seq[String], deps: String*) =
+      try {
+        configurator.updateLinkingFlags(
+          current,
+          deps*
+        )
+      } catch {
+        case NonFatal(exc) =>
+          linkingArgsApprox
+      }
+
+    def updateCompilationFlags(current: Seq[String], deps: String*) =
+      try {
+        configurator.updateCompilationFlags(
+          current,
+          deps*
+        )
+      } catch {
+        case NonFatal(exc) =>
+          compileArgsApprox
+      }
+
+    val arch64 =
+      if (
+        Platform.arch == Platform.Arch.Arm && Platform.bits == Platform.Bits.x64
+      )
+        List("-arch", "arm64")
+      else Nil
+
+    conf
+      .withLinkingOptions(
+        updateLinkingFlags(
+          conf.linkingOptions ++ arch64,
+          deps*
+        )
+      )
+      .withCompileOptions(
+        updateCompilationFlags(
+          conf.compileOptions ++ arch64,
+          deps*
+        )
+      )
+  }
+)
