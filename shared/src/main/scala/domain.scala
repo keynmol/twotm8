@@ -2,6 +2,11 @@ package twotm8
 
 import java.util.UUID
 
+import sttp.tapir.json.upickle.{*, given}
+import sttp.tapir.Schema
+import twotm8.json.codecs.given
+import sttp.tapir.generic.auto.given
+
 class Secret(val plaintext: String):
   override def toString() = "<secret>"
 
@@ -21,13 +26,12 @@ case class ThoughtLeader(
 )
 
 case class Health(
-    dbOk: Health.DB
+    dbOk: HealthDB
 ):
-  def good = dbOk == Health.DB.Yes
+  def good = dbOk == HealthDB.Yes
 
-object Health:
-  opaque type DB = Boolean
-  object DB extends YesNo[DB]
+opaque type HealthDB = Boolean
+object HealthDB extends YesNo[HealthDB]
 
 opaque type AuthorId = UUID
 object AuthorId extends OpaqueValue[AuthorId, UUID]

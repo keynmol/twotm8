@@ -7,9 +7,9 @@
 *.gch
 .cache
 target
+*.o
 
 **/target/**
 project/project
 project/metals.sbt
 build/**
-

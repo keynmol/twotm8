@@ -1,8 +1,6 @@
 package twotm8
 
-import trail.*
 import snunit.*
-import snunit.routes.*
 import scala.util.Try
 import scala.util.Failure
 import scala.util.Success
@@ -22,25 +20,6 @@ trait ApiHelpers:
       case exc =>
         scribe.error(s"Failed request at <${req.method.name} ${req.path}>", exc)
         req.serverError("Something broke yo")
-
-  inline def builder(routes: (Route[?], ArgsHandler[?])*): Handler =
-    routes.foldRight[Handler](_.notFound()) { case ((r, a), acc) =>
-      RouteHandler(
-        r.asInstanceOf[Route[Any]],
-        a.asInstanceOf[ArgsHandler[Any]],
-        acc
-      )
-    }
-
-  inline def api(methods: (Method, Handler)*): Handler =
-    val mp = methods.toMap
-
-    request =>
-      mp.get(request.method) match
-        case None => request.notFound()
-        case Some(h) =>
-          h.handleRequest(request)
-  end api
 
   import upickle.default.{Reader, read}
 
@@ -89,7 +68,7 @@ trait ApiHelpers:
     inline def noContent() =
       r.send(StatusCode.NoContent, "", Seq.empty)
 
-    inline def unauthorized(inline msg: String = "Unathorized") =
+    inline def unauthorized(inline msg: String = "Unauthorized") =
       r.send(StatusCode.Unauthorized, msg, Seq.empty)
 
     inline def notFound(inline msg: String = "Not found") =
@@ -98,15 +77,6 @@ trait ApiHelpers:
     inline def serverError(inline msg: String = "Something broke yo") =
       r.send(StatusCode.InternalServerError, msg, Seq.empty)
   end extension
-
-  given Codec[UUID] with
-    def encode(t: UUID) = Some(t.toString)
-    def decode(v: Option[String]) =
-      v match
-        case None => None
-        case Some(str) =>
-          try Some(UUID.fromString(str))
-          catch case exc => None
 
   case class Cookie(
       name: String,

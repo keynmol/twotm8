@@ -6,6 +6,8 @@ import scribe.format.Formatter
 import scribe.handler.LogHandler
 import scribe.writer.SystemErrWriter
 import snunit.*
+import snunit.tapir.*
+import snunit.tapir.SNUnitInterpreter.*
 import twotm8.db.DB
 
 import scala.concurrent.duration.*
@@ -51,7 +53,7 @@ def connection_string() =
       val app = App(DB.postgres(pgConnection))
       val routes = api.Api(app).routes
 
-      SyncServerBuilder.build(routes).listen()
+      SyncServerBuilder.build(toHandler(routes)).listen()
     }
   }
 end launch

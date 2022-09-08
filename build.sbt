@@ -8,7 +8,8 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 
 val Versions = new {
   val Scala = "3.2.0"
-  val SNUnit = "0.0.15"
+  val SNUnit = "0.0.24"
+  val Tapir = "1.0.6"
   val upickle = "2.0.0"
   val scribe = "3.10.3"
   val Laminar = "0.14.2"
@@ -31,6 +32,17 @@ lazy val manage =
       vcpkgDependencies := Set("libpq", "openssl"),
       libraryDependencies += "com.outr" %%% "scribe" % Versions.scribe,
       libraryDependencies += "com.lihaoyi" %%% "upickle" % Versions.upickle
+    )
+
+lazy val shared =
+  crossProject(NativePlatform, JSPlatform)
+    .crossType(CrossType.Pure)
+    .settings(
+      scalaVersion := Versions.Scala,
+      libraryDependencies ++= Seq(
+        "com.softwaremill.sttp.tapir" %%% "tapir-json-upickle" % Versions.Tapir,
+        "com.softwaremill.sttp.tapir" %%% "tapir-core" % Versions.Tapir
+      )
     )
 
 lazy val frontend =
@@ -61,16 +73,11 @@ lazy val app =
       vcpkgDependencies := Set("libpq", "openssl"),
       libraryDependencies += "com.outr" %%% "scribe" % Versions.scribe,
       libraryDependencies += "com.lihaoyi" %%% "upickle" % Versions.upickle,
-      libraryDependencies += "com.github.lolgab" %%% "snunit" % Versions.SNUnit,
+      libraryDependencies += "com.github.lolgab" %%% "snunit-tapir" % Versions.SNUnit,
       libraryDependencies += "com.eed3si9n.verify" %%% "verify" % "1.0.0" % Test,
-      testFrameworks += new TestFramework("verify.runner.Framework"),
-      libraryDependencies += (
-        "com.github.lolgab" %%% "snunit-routes" % Versions.SNUnit cross CrossVersion.for3Use2_13
-      ).excludeAll(
-        ExclusionRule("org.scala-native"),
-        ExclusionRule("com.github.lolgab", "snunit_native0.4_2.13")
-      )
+      testFrameworks += new TestFramework("verify.runner.Framework")
     )
+    .dependsOn(shared.native)
 
 lazy val demoApp =
   project
@@ -84,12 +91,7 @@ lazy val demoApp =
       vcpkgDependencies := Set("libpq", "openssl"),
       libraryDependencies += "com.outr" %%% "scribe" % Versions.scribe,
       libraryDependencies += "com.lihaoyi" %%% "upickle" % Versions.upickle,
-      libraryDependencies += "com.github.lolgab" %%% "snunit" % Versions.SNUnit,
-      libraryDependencies += (
-        "com.github.lolgab" %%% "snunit-routes" % Versions.SNUnit cross CrossVersion.for3Use2_13
-      ).excludeAll(
-        ExclusionRule("com.github.lolgab", "snunit_native0.4_2.13")
-      )
+      libraryDependencies += "com.github.lolgab" %%% "snunit" % Versions.SNUnit
     )
 
 lazy val environmentConfiguration = Seq(nativeConfig := {
@@ -151,11 +153,21 @@ buildBackend := {
 }
 
 def restartLocalUnit = {
-  val f = new File("/opt/homebrew/var/run/unit/control.sock")
+  // `unitd --help` prints the default unix socket
+  val unixSocketPath = process
+    .Process(Seq("unitd", "--help"))
+    .!!
+    .linesIterator
+    .find(_.contains("unix:"))
+    .get
+    .replaceAll(".+unix:", "")
+    .stripSuffix("\"")
+
+  val f = new File(unixSocketPath)
 
   if (f.exists()) {
     val cmd =
-      "curl --unix-socket /opt/homebrew/var/run/unit/control.sock http://localhost/control/applications/app/restart"
+      s"curl --unix-socket $unixSocketPath http://localhost/control/applications/app/restart"
 
     println(process.Process(cmd).!!)
   }

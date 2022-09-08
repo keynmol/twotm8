@@ -7,6 +7,7 @@
 *.gch
 .cache
 target
+*.o
 
 **/target/**
 project/project

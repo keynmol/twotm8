@@ -15,8 +15,6 @@ import java.{util as ju}
 import scala.util.Try
 import openssl.OpenSSL
 
-case class AuthContext(author: AuthorId)
-
 object Auth:
   def validate(
       jwt: JWT
