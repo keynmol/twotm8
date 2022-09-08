@@ -12,4 +12,4 @@ object TestUUID extends verify.BasicTestSuite:
 
     assert(uuid1 != uuid2)
   }
-
+end TestUUID
