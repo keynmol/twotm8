@@ -50,10 +50,10 @@ object codecs:
   given Codec.PlainCodec[api.ErrorInfo.ServerError] =
     Codec.string.map(api.ErrorInfo.ServerError(_))(_.message)
 
-  given ReadWriter[HealthDB] = opaqValue(HealthDB)
+  given ReadWriter[Health.DB] = opaqValue(Health.DB)
   given ReadWriter[Health] = upickle.default.macroRW[Health]
 
-  given Schema[HealthDB] = Schema.schemaForBoolean.as[HealthDB]
+  given Schema[Health.DB] = Schema.schemaForBoolean.as[Health.DB]
   given Schema[Health] = Schema.derived
   given Schema[Uwotm8Status] = Schema.schemaForBoolean.as[Uwotm8Status]
   given Schema[Nickname] = Schema.schemaForString.as[Nickname]

@@ -71,6 +71,6 @@ class App(db: DB)(using z: Zone, config: Settings):
 
   def healthCheck(): Health =
     Health(
-      dbOk = HealthDB(db.connectionIsOkay())
+      dbOk = Health.DB(db.connectionIsOkay())
     )
 end App

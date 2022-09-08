@@ -21,12 +21,12 @@ case class ThoughtLeader(
 )
 
 case class Health(
-    dbOk: HealthDB
+    dbOk: Health.DB
 ):
-  def good = dbOk == HealthDB.Yes
-
-opaque type HealthDB = Boolean
-object HealthDB extends YesNo[HealthDB]
+  def good = dbOk == Health.DB.Yes
+object Health:
+  opaque type DB = Boolean
+  object DB extends YesNo[DB]
 
 opaque type AuthorId = UUID
 object AuthorId extends OpaqueValue[AuthorId, UUID]
