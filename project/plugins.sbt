@@ -1,5 +1,5 @@
 val BindgenVersion =
-  sys.env.getOrElse("SN_BINDGEN_VERSION", "0.0.13+21-8c00bb3f-SNAPSHOT")
+  sys.env.getOrElse("SN_BINDGEN_VERSION", "0.0.14")
 
 resolvers += Resolver.sonatypeRepo("snapshots")
 
