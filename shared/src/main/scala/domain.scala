@@ -2,11 +2,6 @@ package twotm8
 
 import java.util.UUID
 
-import sttp.tapir.json.upickle.{*, given}
-import sttp.tapir.Schema
-import twotm8.json.codecs.given
-import sttp.tapir.generic.auto.given
-
 class Secret(val plaintext: String):
   override def toString() = "<secret>"
 
