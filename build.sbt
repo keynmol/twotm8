@@ -8,7 +8,7 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 
 val Versions = new {
   val Scala = "3.2.0"
-  val SNUnit = "0.0.15"
+  val SNUnit = "0.0.24"
   val upickle = "2.0.0"
   val scribe = "3.10.3"
   val Laminar = "0.14.2"
