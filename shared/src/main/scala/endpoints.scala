@@ -37,7 +37,7 @@ object endpoints:
     .in("api" / "thought_leaders" / "me")
     .out(jsonBody[ThoughtLeader])
 
-  val get_thought_leader = endpoint
+  val get_thought_leader = baseEndpoint
     .securityIn(auth.bearer[Option[String]]())
     .get
     .in("api" / "thought_leaders" / path[String])

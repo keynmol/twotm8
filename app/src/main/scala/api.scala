@@ -111,7 +111,7 @@ class Api(app: App):
             )
           )
         case Some(_) =>
-          Right(()) // TODO req.noContent()
+          Right(())
     end if
   end create_twot
 
@@ -151,18 +151,18 @@ class Api(app: App):
         case None =>
           Left(ErrorInfo.BadRequest("This nickname is already taken"))
         case Some(_) =>
-          Right(()) // TODO: req.noContent()
+          Right(())
     end if
   end register
 
   private def get_thought_leader(auth: Either[ErrorInfo, AuthContext])(
       nickname: String
-  ): Either[Unit, ThoughtLeader] =
+  ): Either[ErrorInfo, ThoughtLeader] =
     val watcher = auth.toOption.map(_.author)
 
     app.get_thought_leader(Nickname(nickname), watcher) match
       case None =>
-        Left(()) // TODO: Return notFound
+        Left(ErrorInfo.NotFound())
       case Some(tl) =>
         Right(tl)
   end get_thought_leader
