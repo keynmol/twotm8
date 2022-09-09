@@ -40,6 +40,7 @@ jobs:
             sudo add-apt-repository "deb http://apt.llvm.org/focal/     llvm-toolchain-focal-13   main"
             sudo apt-get update 
             sudo apt-get install clang-13 lldb-13 libclang-13-dev llvm-13-dev lld-13
+            sudo curl --output /usr/share/keyrings/nginx-keyring.gpg https://unit.nginx.org/keys/nginx-keyring.gpg
             sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/debian/ bullseye unit" >> /etc/apt/sources.list.d/unit.list'
             sudo sh -c 'echo "deb-src [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/debian/ bullseye unit" >> /etc/apt/sources.list.d/unit.list'
             sudo apt update
