@@ -8,7 +8,7 @@ object TestAuth extends verify.BasicTestSuite:
     import scala.concurrent.duration.*
     val settings1 = Settings(20.seconds, Secret("hello1"))
     val settings2 = Settings(40.seconds, Secret("hello2"))
-    val id = AuthorId(generateRandomUUID())
+    val id = AuthorId(UUID.randomUUID())
 
     Zone { implicit z =>
 
@@ -21,22 +21,10 @@ object TestAuth extends verify.BasicTestSuite:
 
   }
 
-  test("Random UUID generation") {
-    val uuid1 = generateRandomUUID()
-    assert(2 == uuid1.variant())
-    assert(4 == uuid1.version())
-
-    val uuid2 = generateRandomUUID()
-    assert(2 == uuid2.variant())
-    assert(4 == uuid2.version())
-
-    assert(uuid1 != uuid2)
-  }
-
   test("JWT: expired tokens no longer validate") {
     import scala.concurrent.duration.*
     given Settings = Settings(1.seconds, Secret("hello1"))
-    val id = AuthorId(generateRandomUUID())
+    val id = AuthorId(UUID.randomUUID())
 
     Zone { implicit z =>
 
@@ -53,7 +41,7 @@ object TestAuth extends verify.BasicTestSuite:
     import scala.concurrent.duration.*
     val settings1 = Settings(20.seconds, Secret("hello1"))
     val settings2 = Settings(40.seconds, Secret("hello2"))
-    val id = AuthorId(generateRandomUUID())
+    val id = AuthorId(UUID.randomUUID())
 
     Zone { implicit z =>
 
