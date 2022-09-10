@@ -57,9 +57,11 @@ lazy val frontend =
         "org.scala-js" %%% "scalajs-dom" % Versions.scalajsDom,
         "com.raquo" %%% "waypoint" % Versions.waypoint,
         "com.lihaoyi" %%% "upickle" % Versions.upickle,
+        "com.softwaremill.sttp.tapir" %% "tapir-sttp-client" % Versions.Tapir,
         "com.github.japgolly.scalacss" %%% "core" % Versions.scalacss
       )
     )
+    .dependsOn(shared.js)
 
 lazy val app =
   project
