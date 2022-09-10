@@ -24,7 +24,6 @@ case class Health(
     dbOk: Health.DB
 ):
   def good = dbOk == Health.DB.Yes
-
 object Health:
   opaque type DB = Boolean
   object DB extends YesNo[DB]
