@@ -12,7 +12,7 @@ apt update && apt install -y curl && \
     # install Unit, OpenSSL and Unit development headers
     curl --output /usr/share/keyrings/nginx-keyring.gpg  \
       https://unit.nginx.org/keys/nginx-keyring.gpg && \
-    echo "deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/ubuntu/ jammy unit" >> /etc/apt/sources.list.d/unit.list && \
-    echo "deb-src [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/ubuntu/ jammy unit" >> /etc/apt/sources.list.d/unit.list && \
+    echo "deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/ubuntu/ $(lsb_release -c -s) unit" >> /etc/apt/sources.list.d/unit.list && \
+    echo "deb-src [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/ubuntu/ $(lsb_release -c -s) unit" >> /etc/apt/sources.list.d/unit.list && \
     apt update && \
     apt install -y unit-dev

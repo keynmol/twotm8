@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jammy as builder
+FROM eclipse-temurin:17-focal as builder
 
 COPY scripts /scripts
 RUN /scripts/setup-debian.sh
