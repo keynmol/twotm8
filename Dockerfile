@@ -5,7 +5,7 @@ RUN apt update && apt install -y curl && \
     chmod +x /usr/local/bin/sbt && \
     curl -Lo llvm.sh https://apt.llvm.org/llvm.sh && \
     chmod +x llvm.sh && \
-    apt install -y lsb-release wget software-properties-common gnupg && \
+    apt install -y lsb-release wget software-properties-common gnupg automake && \
     ./llvm.sh 13 && \
     apt update && \
     apt install -y zip unzip tar make cmake autoconf pkg-config libclang-13-dev git && \
