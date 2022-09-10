@@ -18,7 +18,7 @@ val Versions = new {
   val scalacss = "1.0.0"
 }
 
-lazy val root = project.in(file(".")).aggregate(frontend, app, demoApp)
+lazy val root = project.in(file(".")).aggregate(frontend, app)
 
 lazy val manage =
   project
@@ -80,21 +80,6 @@ lazy val app =
       testFrameworks += new TestFramework("verify.runner.Framework")
     )
     .dependsOn(shared.native)
-
-lazy val demoApp =
-  project
-    .in(file("demo-app"))
-    .enablePlugins(ScalaNativePlugin, VcpkgPlugin)
-    .dependsOn(bindings)
-    .settings(environmentConfiguration)
-    .settings(vcpkgNativeConfig())
-    .settings(
-      scalaVersion := Versions.Scala,
-      vcpkgDependencies := Set("libpq", "openssl"),
-      libraryDependencies += "com.outr" %%% "scribe" % Versions.scribe,
-      libraryDependencies += "com.lihaoyi" %%% "upickle" % Versions.upickle,
-      libraryDependencies += "com.github.lolgab" %%% "snunit" % Versions.SNUnit
-    )
 
 lazy val environmentConfiguration = Seq(nativeConfig := {
   val conf = nativeConfig.value
