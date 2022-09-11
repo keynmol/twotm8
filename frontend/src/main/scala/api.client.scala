@@ -66,15 +66,7 @@ class ApiClient(using Stability):
     .apply(payload)
 
   def create(payload: Payload.Create, token: Token) =
-    interpreter
-      .toSecureClientThrowDecodeFailures(endpoints.create_twot, None, backend)
-      .apply(token.value)
-      .apply(payload)
-      .map {
-        case Right(_)                    => Right(None)
-        case Left(Unauthorized(message)) => Left(Unauthorized(message))
-        case Left(errorInfo)             => Right(Some(errorInfo.message))
-      }
+    callEndpointWithPayloadAndToken(payload, endpoints.create_twot, token)
 
   def delete_twot(twotId: TwotId, token: Token) =
     interpreter
@@ -85,18 +77,18 @@ class ApiClient(using Stability):
   def set_follow(payload: Payload.Follow, state: Boolean, token: Token) =
     val endpoint =
       if state then endpoints.add_follower else endpoints.delete_follower
-    set(payload, endpoint, token)
+    callEndpointWithPayloadAndToken(payload, endpoint, token)
   end set_follow
 
   def set_uwotm8(payload: Payload.Uwotm8, state: Boolean, token: Token) =
     val endpoint =
       if state then endpoints.add_uwotm8 else endpoints.delete_uwotm8
-    set(payload, endpoint, token)
+    callEndpointWithPayloadAndToken(payload, endpoint, token)
   end set_uwotm8
 
-  private def set[T, U](
-      payload: T,
-      endpoint: Endpoint[JWT, T, ErrorInfo, U, Any],
+  private def callEndpointWithPayloadAndToken[INPUT, OUTPUT](
+      payload: INPUT,
+      endpoint: Endpoint[JWT, INPUT, ErrorInfo, OUTPUT, Any],
       token: Token
   ) =
     interpreter
@@ -108,6 +100,6 @@ class ApiClient(using Stability):
         case Left(Unauthorized(message)) => Left(Unauthorized(message))
         case Left(errorInfo)             => Right(Some(errorInfo.message))
       }
-  end set
+  end callEndpointWithPayloadAndToken
 
 end ApiClient
