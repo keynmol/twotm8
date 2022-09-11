@@ -1,7 +1,8 @@
 package twotm8
 package api
 
-sealed trait ErrorInfo
+sealed trait ErrorInfo:
+  def message: String
 object ErrorInfo:
   case class NotFound(message: String = "Not Found") extends ErrorInfo
   case class BadRequest(message: String = "Bad Request") extends ErrorInfo

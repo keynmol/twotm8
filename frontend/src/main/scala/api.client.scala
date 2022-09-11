@@ -9,150 +9,105 @@ import org.scalajs.dom
 import org.scalajs.dom.Fetch.fetch
 import org.scalajs.dom.*
 import org.scalajs.dom.experimental.ResponseInit
+import twotm8.endpoints.*
 import upickle.default.ReadWriter
 
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSON
 import scala.scalajs.js.Promise
-import twotm8.frontend.Responses.ThoughtLeaderProfile
+import sttp.tapir.client.sttp.SttpClientInterpreter
+import sttp.client3.SttpBackend
 import org.scalajs.dom.RequestInit
+import sttp.tapir.Endpoint.apply
+import sttp.tapir.Endpoint
+import twotm8.api.ErrorInfo
+import twotm8.api.ErrorInfo.Unauthorized
+import twotm8.api.Payload
+import sttp.client3.FetchBackend
+import twotm8.frontend.RetryingBackend
 
 object ApiClient extends ApiClient(using Stability())
 
 class ApiClient(using Stability):
-  import scala.scalajs.js
-  import js.Thenable.Implicits.*
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  extension (req: Future[Response])
-    def authenticated[A](f: Response => Future[A]): Future[Either[Error, A]] =
-      req.flatMap { resp =>
-        if resp.status == 401 then Future.successful(Left(Error.Unauthorized))
-        else f(resp).map(Right.apply)
-      }
+  private val backend = RetryingBackend(FetchBackend())
+  private val interpreter = SttpClientInterpreter()
 
-  def get_profile(
-      author: String,
-      token: Option[Token]
-  ): Future[Responses.ThoughtLeaderProfile] =
-    exponentialFetch(
-      s"/api/thought_leaders/$author",
-      addAuth(new RequestInit {}, token)
-    ).flatMap { resp =>
-      resp
-        .json()
-        .map(fromJson[Responses.ThoughtLeaderProfile])
-    }
+  def get_profile(author: String, token: Option[Token]) = interpreter
+    .toSecureClientThrowErrors(endpoints.get_thought_leader, None, backend)
+    .apply(token.map(_.value))
+    .apply(author)
 
-  def me(tok: Token): Future[Either[Error, ThoughtLeaderProfile]] =
-    val req = new RequestInit {}
-    req.method = HttpMethod.GET
-    exponentialFetch("/api/thought_leaders/me", addAuth(req, tok))
-      .authenticated { resp =>
-        resp.json().map(fromJson[Responses.ThoughtLeaderProfile])
-      }
-
-  def is_authenticated(token: Token): Future[Boolean] =
-    me(token).map(_.isRight)
+  def me(token: Token) =
+    interpreter
+      .toSecureClientThrowDecodeFailures(endpoints.get_me, None, backend)
+      .apply(token.value)
+      .apply(())
 
   def get_wall(token: Token) =
-    exponentialFetch("/api/twots/wall", addAuth(new RequestInit {}, token))
-      .authenticated { resp =>
-        resp.json().map(fromJson[List[Responses.Twot]])
+    interpreter
+      .toSecureClientThrowDecodeFailures(endpoints.get_wall, None, backend)
+      .apply(token.value)
+      .apply(())
+
+  def register(payload: Payload.Register) =
+    interpreter
+      .toClientThrowDecodeFailures(endpoints.register, None, backend)
+      .apply(payload)
+      .map {
+        case Right(_)        => None
+        case Left(errorInfo) => Some(errorInfo.message)
       }
 
-  private def addAuth(rq: RequestInit, tok: Token) =
-    rq.headers = js.Dictionary("Authorization" -> s"Bearer ${tok.value}")
-    rq
+  def login(payload: Payload.Login) = interpreter
+    .toClientThrowDecodeFailures(endpoints.login, None, backend)
+    .apply(payload)
 
-  private def addAuth(rq: RequestInit, tokenMaybe: Option[Token]) =
-    tokenMaybe.foreach { tok =>
-      rq.headers = js.Dictionary("Authorization" -> s"Bearer ${tok.value}")
-    }
-    rq
-
-  def login(
-      payload: Payloads.Login
-  ): Future[Either[String, Responses.TokenResponse]] =
-    val req = new RequestInit {}
-    req.method = HttpMethod.POST
-    req.body = toJsonString(payload)
-
-    exponentialFetch(s"/api/auth/login", req, forceRetry = true)
-      .flatMap { resp =>
-        if resp.ok then
-          resp.json().map(fromJson[Responses.TokenResponse]).map(Right.apply)
-        else resp.text().map(txt => Left(txt))
-
+  def create(payload: Payload.Create, token: Token) =
+    interpreter
+      .toSecureClientThrowDecodeFailures(endpoints.create_twot, None, backend)
+      .apply(token.value)
+      .apply(payload)
+      .map {
+        case Right(_)                    => Right(None)
+        case Left(Unauthorized(message)) => Left(Unauthorized(message))
+        case Left(errorInfo)             => Right(Some(errorInfo.message))
       }
-  end login
 
-  def register(payload: Payloads.Register): Future[Option[String]] =
-    val req = new RequestInit {}
-    req.method = HttpMethod.PUT
-    req.body = toJsonString(payload)
+  def delete_twot(twotId: TwotId, token: Token) =
+    interpreter
+      .toSecureClientThrowDecodeFailures(endpoints.delete_twot, None, backend)
+      .apply(token.value)
+      .apply(twotId)
 
-    exponentialFetch(s"/api/auth/register", req)
-      .flatMap { resp =>
-        if resp.ok then Future.successful(None)
-        else resp.text().map(txt => Some(txt))
+  def set_follow(payload: Payload.Follow, state: Boolean, token: Token) =
+    val endpoint =
+      if state then endpoints.add_follower else endpoints.delete_follower
+    set(payload, endpoint, token)
+  end set_follow
 
-      }
-  end register
-
-  def create(payload: Payloads.Create, token: Token) =
-    val req = new RequestInit {}
-    req.method = HttpMethod.POST
-    req.body = toJsonString(payload)
-
-    exponentialFetch(s"/api/twots/create", addAuth(req, token))
-      .authenticated { resp =>
-        if resp.ok then Future.successful(None)
-        else resp.text().map(txt => Some(txt))
-
-      }
-  end create
-
-  def delete_twot(id: String, token: Token) =
-    val req = new RequestInit {}
-    req.method = HttpMethod.DELETE
-
-    exponentialFetch(s"/api/twots/$id", addAuth(req, token))
-      .authenticated(resp => Future.successful(resp.ok))
-
-  def set_uwotm8(
-      payload: Payloads.Uwotm8,
-      state: Boolean,
-      token: Token
-  ) =
-    val req = new RequestInit {}
-    req.method = if state then HttpMethod.PUT else HttpMethod.DELETE
-    req.body = toJsonString(payload)
-
-    exponentialFetch(s"/api/twots/uwotm8", addAuth(req, token))
-      .authenticated { resp =>
-        if resp.ok then Future.successful(None)
-        else resp.text().map(txt => Some(txt))
-
-      }
+  def set_uwotm8(payload: Payload.Uwotm8, state: Boolean, token: Token) =
+    val endpoint =
+      if state then endpoints.add_uwotm8 else endpoints.delete_uwotm8
+    set(payload, endpoint, token)
   end set_uwotm8
 
-  def set_follow(
-      payload: Payloads.Follow,
-      state: Boolean,
+  private def set[T, U](
+      payload: T,
+      endpoint: Endpoint[JWT, T, ErrorInfo, U, Any],
       token: Token
   ) =
-    val req = new RequestInit {}
-    req.method = if state then HttpMethod.PUT else HttpMethod.DELETE
-    req.body = toJsonString(payload)
-
-    exponentialFetch(s"/api/thought_leaders/follow", addAuth(req, token))
-      .authenticated { resp =>
-        if resp.ok then Future.successful(None)
-        else resp.text().map(txt => Some(txt))
-
+    interpreter
+      .toSecureClientThrowDecodeFailures(endpoint, None, backend)
+      .apply(token.value)
+      .apply(payload)
+      .map {
+        case Right(_)                    => Right(None)
+        case Left(Unauthorized(message)) => Left(Unauthorized(message))
+        case Left(errorInfo)             => Right(Some(errorInfo.message))
       }
-  end set_follow
+  end set
 
 end ApiClient

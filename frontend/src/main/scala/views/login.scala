@@ -6,6 +6,7 @@ import com.raquo.laminar.api.L.*
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import twotm8.api.Payload
 
 def Login(using router: Router[Page], state: AppState): HtmlElement =
   val error = Var[Option[String]](None)
@@ -38,11 +39,11 @@ private def LoginForm(
   val sendLogin = onClick.preventDefault --> { _ =>
     ApiClient
       .login(
-        Payloads.Login(nickname = nickname.now(), password = password.now())
+        Payload.Login(nickname = Nickname(nickname.now()), password = Password(password.now()))
       )
       .foreach {
         case Left(err) =>
-          error.set(Some(err))
+          error.set(Some(err.message))
         case Right(response) =>
           val token = Token(response.jwt)
           state.setToken(token)

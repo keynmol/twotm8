@@ -9,14 +9,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import FollowState.*
 import com.raquo.airstream.core.Signal
-import twotm8.frontend.Responses.ThoughtLeaderProfile
+import twotm8.api.Payload
 
 def Profile(page: Signal[Page.Profile])(using Router[Page])(using
     state: AppState
 ) =
   val followState = Var(FollowState.Hide)
 
-  val profile: Signal[Option[ThoughtLeaderProfile]] =
+  val profile: Signal[Option[ThoughtLeader]] =
     page
       .map(_.authorId)
       .combineWith(state.$token)
@@ -31,7 +31,8 @@ def Profile(page: Signal[Page.Profile])(using Router[Page])(using
       .map { case (followers, currentUser) =>
         currentUser
           .map { prof =>
-            if (followers.contains(prof.id)) then Yes else No
+            if (followers.exists(follower => follower.raw == prof.id.raw)) then Yes
+            else No
           }
           .getOrElse(Hide)
       }
@@ -72,7 +73,7 @@ enum FollowState derives UnivEq:
 
 private def FollowButton(
     followState: Var[FollowState],
-    thought_leader: Responses.ThoughtLeaderProfile
+    thought_leader: ThoughtLeader
 )(using state: AppState) =
 
   val sendFollow = onClick --> { _ =>
@@ -84,7 +85,7 @@ private def FollowButton(
     do
       ApiClient
         .set_follow(
-          Payloads.Follow(thought_leader.id),
+          Payload.Follow(thought_leader.id),
           newState == Yes,
           token
         )

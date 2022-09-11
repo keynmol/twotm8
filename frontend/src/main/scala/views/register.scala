@@ -5,6 +5,7 @@ import com.raquo.laminar.api.L.*
 import com.raquo.waypoint.Router
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import twotm8.api.Payload
 
 def Register(using router: Router[Page], state: AppState): HtmlElement =
   val error = Var[Option[String]](None)
@@ -36,7 +37,7 @@ private def RegisterForm(error: Var[Option[String]])(using
   val sendRegistration = onClick.preventDefault --> { _ =>
     ApiClient
       .register(
-        Payloads.Register(nickname = nickname.now(), password = password.now())
+        Payload.Register(nickname = Nickname(nickname.now()), password = Password(password.now()))
       )
       .foreach {
         case e @ Some(err) => error.set(e)

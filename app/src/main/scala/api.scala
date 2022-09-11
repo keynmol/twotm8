@@ -50,9 +50,8 @@ class Api(app: App):
       .serverLogicSuccess(delete_twot)
   )
 
-  private def validateBearer(bearer: String): Either[ErrorInfo, AuthContext] =
-    val jwt = JWT(bearer)
-    app.validate(jwt) match
+  private def validateBearer(bearer: JWT): Either[ErrorInfo, AuthContext] =
+    app.validate(bearer) match
       case None =>
         Left(ErrorInfo.Unauthorized())
       case Some(auth) =>
@@ -115,9 +114,8 @@ class Api(app: App):
     end if
   end create_twot
 
-  private def delete_twot(auth: AuthContext)(uuid: UUID): Unit =
+  private def delete_twot(auth: AuthContext)(twotId: TwotId): Unit =
     val authorId = auth.author
-    val twotId = TwotId(uuid)
 
     app.delete_twot(authorId, twotId)
 
