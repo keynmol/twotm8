@@ -39,7 +39,10 @@ private def LoginForm(
   val sendLogin = onClick.preventDefault --> { _ =>
     ApiClient
       .login(
-        Payload.Login(nickname = Nickname(nickname.now()), password = Password(password.now()))
+        Payload.Login(
+          nickname = Nickname(nickname.now()),
+          password = Password(password.now())
+        )
       )
       .foreach {
         case Left(err) =>
