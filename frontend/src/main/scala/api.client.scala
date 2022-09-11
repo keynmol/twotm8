@@ -7,25 +7,25 @@ import com.raquo.laminar.api.L.*
 import com.raquo.waypoint.*
 import org.scalajs.dom
 import org.scalajs.dom.Fetch.fetch
+import org.scalajs.dom.RequestInit
 import org.scalajs.dom.*
 import org.scalajs.dom.experimental.ResponseInit
+import sttp.client3.FetchBackend
+import sttp.client3.SttpBackend
+import sttp.tapir.Endpoint
+import sttp.tapir.Endpoint.apply
+import sttp.tapir.client.sttp.SttpClientInterpreter
+import twotm8.api.ErrorInfo
+import twotm8.api.ErrorInfo.Unauthorized
+import twotm8.api.Payload
 import twotm8.endpoints.*
+import twotm8.frontend.RetryingBackend
 import upickle.default.ReadWriter
 
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSON
 import scala.scalajs.js.Promise
-import sttp.tapir.client.sttp.SttpClientInterpreter
-import sttp.client3.SttpBackend
-import org.scalajs.dom.RequestInit
-import sttp.tapir.Endpoint.apply
-import sttp.tapir.Endpoint
-import twotm8.api.ErrorInfo
-import twotm8.api.ErrorInfo.Unauthorized
-import twotm8.api.Payload
-import sttp.client3.FetchBackend
-import twotm8.frontend.RetryingBackend
 
 object ApiClient extends ApiClient(using Stability())
 

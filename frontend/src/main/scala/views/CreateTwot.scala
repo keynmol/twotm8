@@ -3,12 +3,12 @@ package frontend
 
 import com.raquo.laminar.api.L.*
 import com.raquo.waypoint.Router
+import twotm8.api.Payload
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js.Date
 
 import ApiClient.*
-import twotm8.api.Payload
 
 def CreateTwot(
     update: () => Unit

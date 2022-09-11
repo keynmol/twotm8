@@ -1,19 +1,19 @@
 package twotm8
 
-import scala.scalanative.unsafe.*
-import scala.scalanative.libc.*
-
-import scala.util.Using
-import java.util.UUID
+import openssl.OpenSSL
 import openssl.functions.*
 import openssl.types.*
+
 import java.time.Instant
-import scala.concurrent.duration.*
-import scala.scalanative.posix.time
 import java.util.Base64
+import java.util.UUID
 import java.{util as ju}
+import scala.concurrent.duration.*
+import scala.scalanative.libc.*
+import scala.scalanative.posix.time
+import scala.scalanative.unsafe.*
 import scala.util.Try
-import openssl.OpenSSL
+import scala.util.Using
 
 object Auth:
   def validate(

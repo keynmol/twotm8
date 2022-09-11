@@ -1,11 +1,11 @@
 package twotm8
 package frontend
 
+import com.raquo.airstream.core.Signal
 import com.raquo.laminar.api.L.*
 import com.raquo.waypoint.Router
 
 import scala.scalajs.js.Date
-import com.raquo.airstream.core.Signal
 
 def Wall(using router: Router[Page], state: AppState): HtmlElement =
 
