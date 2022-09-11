@@ -1,12 +1,13 @@
 package twotm8
 package frontend
 
+import scalacss.internal.LengthUnit.ex
 import sttp.capabilities.Effect
 import sttp.client3.*
 import sttp.model.Method
+
 import scala.concurrent.Future
 import scala.concurrent.duration.*
-import scalacss.internal.LengthUnit.ex
 
 class RetryingBackend[P](
     delegate: SttpBackend[Future, P]

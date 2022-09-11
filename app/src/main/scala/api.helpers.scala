@@ -1,10 +1,11 @@
 package twotm8
 
 import snunit.*
-import scala.util.Try
+
+import java.util.UUID
 import scala.util.Failure
 import scala.util.Success
-import java.util.UUID
+import scala.util.Try
 
 trait ApiHelpers:
   inline def handleException(inline handler: Handler): Handler = req =>

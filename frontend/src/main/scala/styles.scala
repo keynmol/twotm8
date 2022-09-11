@@ -2,8 +2,8 @@ package twotm8
 package frontend
 
 import scalacss.ProdDefaults.*
-import scalacss.internal.StyleA
 import scalacss.internal.Attrs.justifyItems
+import scalacss.internal.StyleA
 
 object Styles extends StyleSheet.Inline:
   import dsl.*

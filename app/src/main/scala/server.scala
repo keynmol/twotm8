@@ -6,8 +6,8 @@ import scribe.format.Formatter
 import scribe.handler.LogHandler
 import scribe.writer.SystemErrWriter
 import snunit.*
-import snunit.tapir.*
 import snunit.tapir.SNUnitInterpreter.*
+import snunit.tapir.*
 import twotm8.db.DB
 
 import scala.concurrent.duration.*

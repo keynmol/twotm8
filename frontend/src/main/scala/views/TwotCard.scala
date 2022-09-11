@@ -3,9 +3,9 @@ package frontend
 
 import com.raquo.laminar.api.L.*
 import com.raquo.waypoint.Router
+import twotm8.api.Payload
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import twotm8.api.Payload
 
 def TwotCard(twot: Twot)(using Router[Page], AppState): HtmlElement =
   TwotCard(twot, () => ())

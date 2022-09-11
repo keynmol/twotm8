@@ -1,7 +1,9 @@
 package twotm8
 package db
 
-import roach.{Database, Codec}
+import roach.Codec
+import roach.Database
+
 import java.util.UUID
 import scala.scalanative.unsafe.*
 import scala.util.Using

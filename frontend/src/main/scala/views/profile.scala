@@ -1,15 +1,15 @@
 package twotm8
 package frontend
 
+import com.raquo.airstream.core.Signal
 import com.raquo.laminar.api.L.*
 import com.raquo.waypoint.Router
 import japgolly.univeq.UnivEq
+import twotm8.api.Payload
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import FollowState.*
-import com.raquo.airstream.core.Signal
-import twotm8.api.Payload
 
 def Profile(page: Signal[Page.Profile])(using Router[Page])(using
     state: AppState

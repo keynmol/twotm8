@@ -10,8 +10,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.*
 import scala.scalajs.js
-import scala.scalajs.js.Thenable.Implicits.*
 import scala.scalajs.js.Date
+import scala.scalajs.js.Thenable.Implicits.*
 
 case class Stability(
     initialDelay: FiniteDuration = 100.millis,

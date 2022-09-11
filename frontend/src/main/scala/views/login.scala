@@ -1,12 +1,12 @@
 package twotm8
 package frontend
 
-import com.raquo.waypoint.Router
 import com.raquo.laminar.api.L.*
+import com.raquo.waypoint.Router
+import twotm8.api.Payload
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import twotm8.api.Payload
 
 def Login(using router: Router[Page], state: AppState): HtmlElement =
   val error = Var[Option[String]](None)
