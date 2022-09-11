@@ -4,7 +4,7 @@ package frontend
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
-case class CachedProfile(id: String, nickname: String)
+case class CachedProfile(id: AuthorId, nickname: Nickname)
 
 class AppState private (
     _authToken: Var[Option[Token]],
@@ -40,14 +40,16 @@ object AppState:
   private val tokenKey = "twotm8-auth-token"
 
   private def getToken(): Option[Token] =
-    Option(dom.window.localStorage.getItem(tokenKey)).map(Token.apply)
+    Option(dom.window.localStorage.getItem(tokenKey)).map(value =>
+      Token(JWT(value))
+    )
 
-  private def setToken(value: String): Unit =
-    Option(dom.window.localStorage.setItem(tokenKey, value))
+  private def setToken(value: JWT): Unit =
+    Option(dom.window.localStorage.setItem(tokenKey, value.raw))
 
   private def deleteToken(): Unit =
     dom.window.localStorage.removeItem(tokenKey)
 
 end AppState
 
-case class Token(value: String)
+case class Token(value: JWT)

@@ -31,14 +31,14 @@ object endpoints:
   ).in("api")
 
   private val secureEndpoint = baseEndpoint
-    .securityIn(auth.bearer[String]())
+    .securityIn(auth.bearer[JWT]())
 
   val get_me = secureEndpoint.get
     .in("thought_leaders" / "me")
     .out(jsonBody[ThoughtLeader])
 
   val get_thought_leader = baseEndpoint
-    .securityIn(auth.bearer[Option[String]]())
+    .securityIn(auth.bearer[Option[JWT]]())
     .get
     .in("thought_leaders" / path[String])
     .out(jsonBody[ThoughtLeader])
@@ -87,7 +87,7 @@ object endpoints:
     .out(jsonBody[Uwotm8Status])
 
   val delete_twot = secureEndpoint.delete
-    .in("twots" / path[UUID])
+    .in("twots" / path[TwotId])
     .out(statusCode(StatusCode.NoContent))
 
 end endpoints

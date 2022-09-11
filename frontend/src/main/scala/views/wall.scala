@@ -14,7 +14,7 @@ def Wall(using router: Router[Page], state: AppState): HtmlElement =
       h1(
         Styles.welcomeBanner,
         "Welcome back, ",
-        b(profile.nickname)
+        b(profile.nickname.raw)
       )
     }
   }

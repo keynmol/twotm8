@@ -41,6 +41,11 @@ object codecs:
   given ReadWriter[api.Payload.Follow] =
     upickle.default.macroRW[api.Payload.Follow]
 
+  given Codec.PlainCodec[TwotId] =
+    Codec.uuid.map(TwotId(_))(_.raw)
+  given Codec.PlainCodec[JWT] =
+    Codec.string.map(JWT(_))(_.raw)
+
   given Codec.PlainCodec[api.ErrorInfo.NotFound] =
     Codec.string.map(api.ErrorInfo.NotFound(_))(_.message)
   given Codec.PlainCodec[api.ErrorInfo.BadRequest] =

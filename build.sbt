@@ -57,7 +57,8 @@ lazy val frontend =
         "org.scala-js" %%% "scalajs-dom" % Versions.scalajsDom,
         "com.raquo" %%% "waypoint" % Versions.waypoint,
         "com.lihaoyi" %%% "upickle" % Versions.upickle,
-        "com.softwaremill.sttp.tapir" %% "tapir-sttp-client" % Versions.Tapir,
+        "com.softwaremill.sttp.tapir" %%% "tapir-sttp-client" % Versions.Tapir,
+        "com.softwaremill.retry" %%% "retry" % "0.3.5",
         "com.github.japgolly.scalacss" %%% "core" % Versions.scalacss
       )
     )
@@ -72,7 +73,7 @@ lazy val app =
     .settings(vcpkgNativeConfig())
     .settings(
       scalaVersion := Versions.Scala,
-      vcpkgDependencies := Set("libpq", "openssl", "libidn2"),
+      vcpkgDependencies := Set("libpq", "openssl"),
       libraryDependencies += "com.softwaremill.sttp.model" %%% "core" % "1.5.2",
       libraryDependencies += "com.outr" %%% "scribe" % Versions.scribe,
       libraryDependencies += "com.lihaoyi" %%% "upickle" % Versions.upickle,
