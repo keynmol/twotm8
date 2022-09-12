@@ -9,6 +9,11 @@ import sttp.model.Method
 import scala.concurrent.Future
 import scala.concurrent.duration.*
 
+case class Stability(
+    delay: FiniteDuration = 100.millis,
+    maxRetries: Int = 5
+)
+
 class RetryingBackend[P](
     delegate: SttpBackend[Future, P]
 )(using stability: Stability)
