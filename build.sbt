@@ -58,7 +58,7 @@ lazy val frontend =
         "com.raquo" %%% "waypoint" % Versions.waypoint,
         "com.lihaoyi" %%% "upickle" % Versions.upickle,
         "com.softwaremill.sttp.tapir" %%% "tapir-sttp-client" % Versions.Tapir,
-        "com.softwaremill.retry" %%% "retry" % "0.3.5",
+        "com.softwaremill.retry" %%% "retry" % "0.3.6",
         "com.github.japgolly.scalacss" %%% "core" % Versions.scalacss
       )
     )
