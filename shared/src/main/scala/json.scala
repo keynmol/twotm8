@@ -26,7 +26,7 @@ object codecs:
   // We never use the `Writer` but tapir always needs a `ReadWriter`
   // even if we are only reading
   given ReadWriter[Password] =
-    upickle.default.readwriter[String].bimap(_.toString, Password(_))
+    upickle.default.readwriter[String].bimap(_.process(identity), Password(_))
 
   // Payloads
 
@@ -73,7 +73,7 @@ object codecs:
   given Schema[ThoughtLeader] = Schema.derived
 
   given Schema[Password] =
-    Schema.schemaForString.map(p => Some(Password(p)))(_.toString)
+    Schema.schemaForString.map(p => Some(Password(p)))(_.process(identity))
   given Schema[api.Payload.Login] = Schema.derived
   given Schema[api.Payload.Create] = Schema.derived
   given Schema[api.Payload.Uwotm8] = Schema.derived
