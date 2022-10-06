@@ -32,7 +32,7 @@ jobs:
             ~/Library/Caches/sbt-vcpkg/vcpkg
             ~/.cache/sbt-vcpkg/vcpkg
             ~/.cache/sbt-vcpkg/vcpkg-install
-          key: ${{ runner.os }}-sbt-vcpkg
+          key: ${{ runner.os }}-sbt-vcpkg-new
 
       - name: Setup for Scala Native
         run: sudo ./scripts/setup-debian.sh
