@@ -26,22 +26,17 @@ jobs:
           java-version: '17'
           cache: sbt
 
-      # - name: Cache vcpkg
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: |
-      #       ~/Library/Caches/sbt-vcpkg/vcpkg
-      #       ~/.cache/sbt-vcpkg/vcpkg
-      #       ~/.cache/sbt-vcpkg/vcpkg-install
-      #     key: ${{ runner.os }}-sbt-vcpkg-new
+      - name: Cache vcpkg
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/Library/Caches/sbt-vcpkg/vcpkg
+            ~/.cache/sbt-vcpkg/vcpkg
+            ~/.cache/sbt-vcpkg/vcpkg-install
+          key: ${{ runner.os }}-sbt-vcpkg-new
 
       - name: Setup for Scala Native
         run: sudo ./scripts/setup-debian.sh
-
-      - name: WHAT 
-        run: |
-          $SBTN 'show vcpkgRoot; show vcpkgRootInit; app/vcpkgInstall'
-          ls -R ~/.cache/sbt-vcpkg/vcpkg
 
       - name: Run tests 
         run: $SBTN 'app/nativeLink; test'
