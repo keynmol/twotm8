@@ -3,7 +3,7 @@ package api
 
 import roach.RoachException
 import roach.RoachFatalException
-import snunit.tapir.SNUnitInterpreter.*
+import snunit.tapir.SNUnitIdServerInterpreter.*
 import sttp.tapir.*
 import sttp.tapir.server.*
 
