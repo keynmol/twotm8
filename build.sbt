@@ -8,13 +8,21 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 
 val Versions = new {
   val Scala = "3.2.0"
+
   val SNUnit = "0.1.0"
-  val Tapir = "1.1.1"
+
+  val Tapir = "1.1.2"
+
   val upickle = "2.0.0"
+
   val scribe = "3.10.3"
+
   val Laminar = "0.14.5"
+
   val scalajsDom = "2.3.0"
+
   val waypoint = "0.5.0"
+
   val scalacss = "1.0.0"
 }
 
@@ -98,15 +106,17 @@ lazy val bindings =
     .settings(
       scalaVersion := Versions.Scala,
       resolvers += Resolver.sonatypeRepo("snapshots"),
+      vcpkgRootInit := com.indoorvivants.vcpkg.VcpkgRootInit.SystemCache(),
       // Generate bindings to Postgres main API
       vcpkgDependencies := Set("libpq", "openssl"),
       Compile / bindgenBindings ++= Seq(
         Binding(
-          vcpkgManager.value.includes("libpq") / "libpq-fe.h",
+          vcpkgConfigurator.value.includes("libpq") / "libpq-fe.h",
           "libpq",
           linkName = Some("pq"),
           cImports = List("libpq-fe.h"),
           clangFlags = vcpkgConfigurator.value
+          .pkgConfig
             .updateCompilationFlags(List("-std=gnu99"), "libpq")
             .toList
         ),
@@ -114,7 +124,7 @@ lazy val bindings =
           (Compile / baseDirectory).value / "openssl-amalgam.h",
           "openssl",
           cImports = List("openssl/sha.h", "openssl/evp.h"),
-          clangFlags = List("-I" + vcpkgManager.value.includes("openssl"))
+          clangFlags = List("-I" + vcpkgConfigurator.value.includes("openssl"))
         )
       )
     )
@@ -204,11 +214,10 @@ def vcpkgNativeConfig(rename: String => String = identity) = Seq(
   nativeConfig := {
     import com.indoorvivants.detective.Platform
     val configurator = vcpkgConfigurator.value
-    val manager = vcpkgManager.value
     val conf = nativeConfig.value
     val deps = vcpkgDependencies.value.toSeq.map(rename)
 
-    val files = deps.map(d => manager.files(d))
+    val files = deps.map(d => configurator.files(d))
 
     val compileArgsApprox = files.flatMap { f =>
       List("-I" + f.includeDir.toString)
@@ -221,7 +230,7 @@ def vcpkgNativeConfig(rename: String => String = identity) = Seq(
 
     def updateLinkingFlags(current: Seq[String], deps: String*) =
       try {
-        configurator.updateLinkingFlags(
+        configurator.pkgConfig.updateLinkingFlags(
           current,
           deps*
         )
@@ -232,7 +241,7 @@ def vcpkgNativeConfig(rename: String => String = identity) = Seq(
 
     def updateCompilationFlags(current: Seq[String], deps: String*) =
       try {
-        configurator.updateCompilationFlags(
+        configurator.pkgConfig.updateCompilationFlags(
           current,
           deps*
         )
