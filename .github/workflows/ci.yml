@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       LLVM_BIN: /usr/lib/llvm-13/bin
+      SBTN: "sbt --client"
     steps:
       - uses: actions/checkout@v3
 
@@ -37,8 +38,13 @@ jobs:
       - name: Setup for Scala Native
         run: sudo ./scripts/setup-debian.sh
 
+      - name: WHAT 
+        run: |
+          $SBTN 'app/vcpkgInstall'
+          ls -R ~/.cache/sbt-vcpkg/vcpkg
+
       - name: Run tests 
-        run: sbt app/nativeLink test
+        run: $SBTN 'app/nativeLink; test'
 
   docker_build:
     name: Docker build

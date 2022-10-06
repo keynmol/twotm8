@@ -37,6 +37,7 @@ lazy val manage =
     .settings(vcpkgNativeConfig())
     .settings(
       scalaVersion := Versions.Scala,
+      vcpkgRootInit := com.indoorvivants.vcpkg.VcpkgRootInit.SystemCache(),
       vcpkgDependencies := Set("libpq", "openssl"),
       libraryDependencies += "com.outr" %%% "scribe" % Versions.scribe,
       libraryDependencies += "com.lihaoyi" %%% "upickle" % Versions.upickle
