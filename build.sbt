@@ -82,6 +82,7 @@ lazy val app =
     .settings(vcpkgNativeConfig())
     .settings(
       scalaVersion := Versions.Scala,
+      vcpkgRootInit := com.indoorvivants.vcpkg.VcpkgRootInit.SystemCache(),
       vcpkgDependencies := Set("libpq", "openssl", "libidn2"),
       libraryDependencies += "com.softwaremill.sttp.model" %%% "core" % "1.5.2",
       libraryDependencies += "com.outr" %%% "scribe" % Versions.scribe,
