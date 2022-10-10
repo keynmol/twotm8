@@ -9,7 +9,7 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 val Versions = new {
   val Scala = "3.2.0"
 
-  val SNUnit = "0.1.0"
+  val SNUnit = "0.1.1"
 
   val Tapir = "1.1.2"
 
@@ -117,8 +117,7 @@ lazy val bindings =
           "libpq",
           linkName = Some("pq"),
           cImports = List("libpq-fe.h"),
-          clangFlags = vcpkgConfigurator.value
-          .pkgConfig
+          clangFlags = vcpkgConfigurator.value.pkgConfig
             .updateCompilationFlags(List("-std=gnu99"), "libpq")
             .toList
         ),
