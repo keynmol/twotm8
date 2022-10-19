@@ -89,7 +89,7 @@ lazy val app =
       libraryDependencies += "com.lihaoyi" %%% "upickle" % Versions.upickle,
       libraryDependencies += "com.github.lolgab" %%% "snunit-tapir" % Versions.SNUnit,
       libraryDependencies += "com.eed3si9n.verify" %%% "verify" % "1.0.0" % Test,
-      libraryDependencies += "com.github.lolgab" %%% "scala-native-crypto" % "0.0.3" % Test,
+      libraryDependencies += "com.github.lolgab" %%% "scala-native-crypto" % "0.0.4" % Test,
       testFrameworks += new TestFramework("verify.runner.Framework")
     )
     .dependsOn(shared.native)
