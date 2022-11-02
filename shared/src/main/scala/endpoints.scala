@@ -10,25 +10,27 @@ import scala.util.chaining.*
 import java.util.UUID
 
 object endpoints:
-  private val baseEndpoint = endpoint.errorOut(
-    oneOf[ErrorInfo](
-      oneOfVariant(
-        statusCode(StatusCode.NotFound).and(plainBody[ErrorInfo.NotFound])
-      ),
-      oneOfVariant(
-        statusCode(StatusCode.BadRequest).and(plainBody[ErrorInfo.BadRequest])
-      ),
-      oneOfVariant(
-        statusCode(StatusCode.Unauthorized)
-          .and(plainBody[ErrorInfo.Unauthorized])
-      ),
-      oneOfVariant(
-        statusCode(StatusCode.InternalServerError).and(
-          plainBody[ErrorInfo.ServerError]
+  private val baseEndpoint = endpoint
+    .errorOut(
+      oneOf[ErrorInfo](
+        oneOfVariant(
+          statusCode(StatusCode.NotFound).and(plainBody[ErrorInfo.NotFound])
+        ),
+        oneOfVariant(
+          statusCode(StatusCode.BadRequest).and(plainBody[ErrorInfo.BadRequest])
+        ),
+        oneOfVariant(
+          statusCode(StatusCode.Unauthorized)
+            .and(plainBody[ErrorInfo.Unauthorized])
+        ),
+        oneOfVariant(
+          statusCode(StatusCode.InternalServerError).and(
+            plainBody[ErrorInfo.ServerError]
+          )
         )
       )
     )
-  ).in("api")
+    .in("api")
 
   private val secureEndpoint = baseEndpoint
     .securityIn(auth.bearer[JWT]())
