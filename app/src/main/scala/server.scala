@@ -13,6 +13,7 @@ import twotm8.db.DB
 import scala.concurrent.duration.*
 import scala.scalanative.unsafe.Zone
 import scala.util.Using
+import scala.scalanative.loop.Timer
 
 def connection_string() =
   sys.env.getOrElse(
@@ -52,6 +53,10 @@ def connection_string() =
 
       val app = App(DB.postgres(pgConnection))
       val routes = api.Api(app).routes
+
+      Timer.repeat(10.seconds) { () =>
+        pgConnection.execute("SELECT 1")
+      }
 
       SyncServerBuilder.build(toHandler(routes)).listen()
     }
