@@ -133,8 +133,8 @@ buildBackend := {
 
   sys.env.get("CI").foreach { _ =>
     val sudo = if (sys.env.contains("USE_SUDO")) "sudo " else ""
-    process.Process(s"${sudo}chown unit ${destination}").!!
-    process.Process(s"${sudo}chgrp unit ${destination}").!!
+    /* process.Process(s"${sudo}chown unit ${destination}").!! */
+    /* process.Process(s"${sudo}chgrp unit ${destination}").!! */
   }
 }
 
