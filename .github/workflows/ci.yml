@@ -38,17 +38,12 @@ jobs:
 
       - name: Install Nginx Unit
         shell: bash
-        run: 
+        run: |
           sudo curl --output /usr/share/keyrings/nginx-keyring.gpg https://unit.nginx.org/keys/nginx-keyring.gpg
-
           sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/ubuntu/ focal unit" >> /etc/apt/sources.list.d/unit.list'
-
           sudo sh -c 'echo "deb-src [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/ubuntu/ focal unit" >> /etc/apt/sources.list.d/unit.list'
-
           sudo apt update
-
           sudo apt install unit unit-dev
-
           sudo systemctl restart unit
 
       - name: Setup Postgres
@@ -69,12 +64,14 @@ jobs:
 
       - name: Print logs
         if: failure()
-        run: 
+        shell: bash
+        run: |
           sudo cat /var/log/unit.log
-
+          cat build/config.json
           echo $PWD
-
           ls -la build
+          echo "$PWD/build/twotm8"
+          $PWD/build/twotm8
 
 
   docker_build:
