@@ -41,8 +41,8 @@ jobs:
         run: 
           sudo curl --output /usr/share/keyrings/nginx-keyring.gpg \
             https://unit.nginx.org/keys/nginx-keyring.gpg
-          sudo echo "deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/ubuntu/ focal unit" >> /etc/apt/sources.list.d/unit.list
-          sudo echo "deb-src [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/ubuntu/ focal unit" >> /etc/apt/sources.list.d/unit.list
+          sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/ubuntu/ focal unit" >> /etc/apt/sources.list.d/unit.list'
+          sudo sh -c 'echo "deb-src [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/ubuntu/ focal unit" >> /etc/apt/sources.list.d/unit.list'
 
           sudo apt update
           sudo apt install unit unit-dev
