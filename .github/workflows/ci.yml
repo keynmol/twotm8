@@ -69,7 +69,9 @@ jobs:
 
       - name: Print logs
         if: failure()
-        run: sudo cat /var/log/unit.log
+        run: 
+          sudo cat /var/log/unit.log
+          ls -la build
 
 
   docker_build:
