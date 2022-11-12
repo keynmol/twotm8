@@ -13,6 +13,7 @@ import twotm8.db.DB
 import scala.concurrent.duration.*
 import scala.scalanative.unsafe.Zone
 import scala.util.Using
+import roach.Pool
 
 def connection_string() =
   sys.env.getOrElse(
@@ -39,7 +40,7 @@ def connection_string() =
     .replace()
 
   Zone { implicit z =>
-    Using.resource(Database(postgres).getOrThrow) { pgConnection =>
+    Pool.single(postgres) { pool =>
       given Settings = Settings(
         tokenExpiration = 14.days,
         secretKey = Secret(
@@ -50,7 +51,7 @@ def connection_string() =
         )
       )
 
-      val app = App(DB.postgres(pgConnection))
+      val app = App(DB.postgres(pool))
       val routes = api.Api(app).routes
 
       SyncServerBuilder.build(toHandler(routes)).listen()

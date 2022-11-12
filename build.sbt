@@ -24,24 +24,11 @@ val Versions = new {
   val waypoint = "0.5.0"
 
   val scalacss = "1.0.0"
+
+  val Roach = "0.0.1"
 }
 
 lazy val root = project.in(file(".")).aggregate(frontend, app)
-
-lazy val manage =
-  project
-    .in(file("manage"))
-    .enablePlugins(ScalaNativePlugin, VcpkgPlugin)
-    .dependsOn(bindings)
-    .settings(environmentConfiguration)
-    .settings(vcpkgNativeConfig())
-    .settings(
-      scalaVersion := Versions.Scala,
-      vcpkgRootInit := com.indoorvivants.vcpkg.VcpkgRootInit.SystemCache(),
-      vcpkgDependencies := Set("libpq", "openssl"),
-      libraryDependencies += "com.outr" %%% "scribe" % Versions.scribe,
-      libraryDependencies += "com.lihaoyi" %%% "upickle" % Versions.upickle
-    )
 
 lazy val shared =
   crossProject(NativePlatform, JSPlatform)
@@ -84,6 +71,7 @@ lazy val app =
       scalaVersion := Versions.Scala,
       vcpkgRootInit := com.indoorvivants.vcpkg.VcpkgRootInit.SystemCache(),
       vcpkgDependencies := Set("libpq", "openssl", "libidn2"),
+      libraryDependencies += "com.indoorvivants.roach" %%% "core" % Versions.Roach,
       libraryDependencies += "com.softwaremill.sttp.model" %%% "core" % "1.5.2",
       libraryDependencies += "com.outr" %%% "scribe" % Versions.scribe,
       libraryDependencies += "com.lihaoyi" %%% "upickle" % Versions.upickle,
@@ -107,20 +95,11 @@ lazy val bindings =
     .enablePlugins(ScalaNativePlugin, BindgenPlugin, VcpkgPlugin)
     .settings(
       scalaVersion := Versions.Scala,
-      resolvers += Resolver.sonatypeRepo("snapshots"),
+      resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
       vcpkgRootInit := com.indoorvivants.vcpkg.VcpkgRootInit.SystemCache(),
       // Generate bindings to Postgres main API
-      vcpkgDependencies := Set("libpq", "openssl"),
+      vcpkgDependencies := Set("openssl"),
       Compile / bindgenBindings ++= Seq(
-        Binding(
-          vcpkgConfigurator.value.includes("libpq") / "libpq-fe.h",
-          "libpq",
-          linkName = Some("pq"),
-          cImports = List("libpq-fe.h"),
-          clangFlags = vcpkgConfigurator.value.pkgConfig
-            .updateCompilationFlags(List("-std=gnu99"), "libpq")
-            .toList
-        ),
         Binding(
           (Compile / baseDirectory).value / "openssl-amalgam.h",
           "openssl",
@@ -150,10 +129,65 @@ buildBackend := {
     preserveLastModified = true
   )
 
-  restartLocalUnit
+  restartLocalUnit.value
 }
 
-def restartLocalUnit = {
+def unitConfig(buildPath: File) =
+  s"""
+{
+  "listeners": {
+    "*:8080": {
+      "pass": "routes"
+    }
+  },
+  "routes": [
+    {
+      "match": {
+        "uri": "/api/*"
+      },
+      "action": {
+        "pass": "applications/app"
+      }
+    },
+    {
+      "match": {
+        "uri": "~^((/(.*)\\\\.(js|css|html))|/)$$"
+      },
+      "action": {
+        "share": "${buildPath}$$uri"
+      }
+    },
+    {
+      "action": {
+        "share": "${buildPath / "index.html"}"
+      }
+    }
+  ],
+  "applications": {
+    "app": {
+      "processes": {
+        "max": 50,
+        "spare": 2,
+        "idle_timeout": 180
+      },
+      "type": "external",
+      "executable": "${buildPath / "twotm8"}",
+      "environment": {
+        "JWT_SECRET": "secret"
+      },
+      "limits": {
+        "timeout": 1,
+        "requests": 1000
+      }
+    }
+  }
+}
+
+"""
+
+lazy val restartLocalUnit = taskKey[Unit]("")
+
+restartLocalUnit := {
   // `unitd --help` prints the default unix socket
   val unixSocketPath = process
     .Process(Seq("unitd", "--help"))
@@ -166,12 +200,27 @@ def restartLocalUnit = {
 
   val f = new File(unixSocketPath)
 
+  val configJson = writeConfig.value
+
   if (f.exists()) {
+    val cmd_create =
+      s"curl -X PUT --data-binary @$configJson --unix-socket $unixSocketPath http://localhost/config"
     val cmd =
       s"curl --unix-socket $unixSocketPath http://localhost/control/applications/app/restart"
 
+    println(process.Process(cmd_create).!!)
     println(process.Process(cmd).!!)
   }
+}
+
+lazy val writeConfig = taskKey[File]("")
+writeConfig := {
+  val buildPath = (ThisBuild / baseDirectory).value / "build"
+  val path = buildPath / "config.json"
+
+  IO.write(path, unitConfig(buildPath))
+
+  path
 }
 
 lazy val frontendFile = taskKey[File]("")
@@ -208,7 +257,7 @@ buildFrontend := {
 
   IO.copyFile(js, destination / "frontend.js")
 
-  restartLocalUnit
+  restartLocalUnit.value
 }
 
 def vcpkgNativeConfig(rename: String => String = identity) = Seq(
