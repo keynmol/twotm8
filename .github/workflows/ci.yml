@@ -52,11 +52,22 @@ jobs:
 
           sudo systemctl restart unit
 
+      - name: Setup Postgres
+        run: |
+          set -e
+          docker run -p 5432:5432 -e POSTGRES_PASSWORD=mysecretpassword -d postgres
+
       - name: Setup for Scala Native
         run: sudo ./scripts/setup-debian.sh
 
       - name: Run tests 
         run: $SBTN 'app/nativeLink; test'
+
+      - name: Start application
+        run: $SBTN buildApp
+
+      - name: Integration tests 
+        run: curl http://localhost:8080/api/health
 
   docker_build:
     name: Docker build
