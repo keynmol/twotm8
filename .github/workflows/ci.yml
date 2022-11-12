@@ -60,11 +60,13 @@ jobs:
       - name: Setup for Scala Native
         run: sudo ./scripts/setup-debian.sh
 
-      - name: Run tests 
-        run: $SBTN 'app/nativeLink; test'
-
       - name: Start application
         run: $SBTN buildApp
+        env:
+          USE_SUDO: true
+
+      - name: Run tests 
+        run: $SBTN test
 
       - name: Integration tests 
         run: curl http://localhost:8080/api/health

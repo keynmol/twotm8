@@ -204,11 +204,13 @@ restartLocalUnit := {
 
   val configJson = writeConfig.value
 
+  val sudo = if(sys.env.contains("USE_SUDO")) "sudo " else ""
+
   if (f.exists()) {
     val cmd_create =
-      s"curl -X PUT --data-binary @$configJson --unix-socket $unixSocketPath http://localhost/config"
+      s"${sudo}curl -X PUT --data-binary @$configJson --unix-socket $unixSocketPath http://localhost/config"
     val cmd =
-      s"curl --unix-socket $unixSocketPath http://localhost/control/applications/app/restart"
+      s"${sudo}curl --unix-socket $unixSocketPath http://localhost/control/applications/app/restart"
 
     println(process.Process(cmd_create).!!)
     println(process.Process(cmd).!!)
