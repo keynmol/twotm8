@@ -132,7 +132,8 @@ buildBackend := {
   process.Process(s"chmod 0777 ${destination}").!!
 
   sys.env.get("CI").foreach { _ =>
-    process.Process(s"chown unit ${destination}").!!
+    val sudo = if (sys.env.contains("USE_SUDO")) "sudo " else ""
+    process.Process(s"${sudo}chown unit ${destination}").!!
   }
 }
 
