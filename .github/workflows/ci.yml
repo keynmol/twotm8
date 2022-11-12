@@ -54,10 +54,13 @@ jobs:
       - name: Setup for Scala Native
         run: sudo ./scripts/setup-debian.sh
 
-      - name: Start application
-        run: sbt deployLocally test
-        env:
-          USE_SUDO: true
+      - name: Unit tests
+        run: sbt test buildApp
+
+      - name: Start service in docker
+        run: |
+          docker build -f Dockerfile.lean . -t twotm8-runtime
+          docker run -d -p 8080:8080 twotm8-runtime 
 
       - name: Integration tests 
         run: curl http://localhost:8080/api/health
