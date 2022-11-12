@@ -71,6 +71,7 @@ jobs:
         if: failure()
         run: 
           sudo cat /var/log/unit.log
+
           ls -la build
 
 
