@@ -200,6 +200,8 @@ restartLocalUnit := {
 
   val f = new File(unixSocketPath)
 
+  sLog.value.info(s"Unit socket path: $unixSocketPath")
+
   val configJson = writeConfig.value
 
   if (f.exists()) {
