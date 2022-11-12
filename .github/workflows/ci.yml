@@ -60,7 +60,7 @@ jobs:
         run: sudo ./scripts/setup-debian.sh
 
       - name: Start application
-        run: sbt buildApp test
+        run: sbt deployLocally test
         env:
           USE_SUDO: true
 

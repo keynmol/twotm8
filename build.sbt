@@ -131,7 +131,9 @@ buildBackend := {
 
   process.Process(s"chmod 0777 ${destination}").!!
 
-  restartLocalUnit.value
+  sys.env.get("C").foreach { _ =>
+    process.Process(s"chown unit ${destination}").!!
+  }
 }
 
 def unitConfig(buildPath: File) =
@@ -187,9 +189,15 @@ def unitConfig(buildPath: File) =
 
 """
 
-lazy val restartLocalUnit = taskKey[Unit]("")
+lazy val deployLocally = taskKey[Unit]("")
+deployLocally := {
+  locally { buildApp.value }
+  locally { updateUnitConfiguration.value }
+}
 
-restartLocalUnit := {
+lazy val updateUnitConfiguration = taskKey[Unit]("")
+
+updateUnitConfiguration := {
   // `unitd --help` prints the default unix socket
   val unixSocketPath = process
     .Process(Seq("unitd", "--help"))
@@ -202,7 +210,10 @@ restartLocalUnit := {
 
   val f = new File(unixSocketPath)
 
-  assert(f.exists(), s"Expected Unix socket file for Nginx Unit `${f}` to exist")
+  assert(
+    f.exists(),
+    s"Expected Unix socket file for Nginx Unit `${f}` to exist"
+  )
 
   sLog.value.info(s"Unit socket path: $unixSocketPath")
 
@@ -211,12 +222,21 @@ restartLocalUnit := {
   val sudo = if (sys.env.contains("USE_SUDO")) "sudo " else ""
 
   val cmd_create =
-    s"${sudo}curl -X PUT --data-binary @$configJson --unix-socket $unixSocketPath http://localhost/config"
+    s"${sudo}curl -s -X PUT --data-binary @$configJson --unix-socket $unixSocketPath http://localhost/config"
   val cmd =
-    s"${sudo}curl --unix-socket $unixSocketPath http://localhost/control/applications/app/restart"
+    s"${sudo}curl -s --unix-socket $unixSocketPath http://localhost/control/applications/app/restart"
 
-  println(process.Process(cmd_create).!!)
-  println(process.Process(cmd).!!)
+  val create_result = process.Process(cmd_create).!!
+  val reload_result = process.Process(cmd).!!
+
+  assert(
+    create_result.contains("Reconfiguration done"),
+    s"Unit reconfiguration didn't succeed, returning `$create_result`"
+  )
+  assert(
+    reload_result.contains("success"),
+    s"Unit reload didn't succeed, returning `$reload_result`"
+  )
 }
 
 lazy val writeConfig = taskKey[File]("")
@@ -262,8 +282,6 @@ buildFrontend := {
   )
 
   IO.copyFile(js, destination / "frontend.js")
-
-  restartLocalUnit.value
 }
 
 def vcpkgNativeConfig(rename: String => String = identity) = Seq(
