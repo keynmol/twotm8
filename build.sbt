@@ -131,7 +131,7 @@ buildBackend := {
 
   process.Process(s"chmod 0777 ${destination}").!!
 
-  sys.env.get("C").foreach { _ =>
+  sys.env.get("CI").foreach { _ =>
     process.Process(s"chown unit ${destination}").!!
   }
 }
