@@ -67,6 +67,11 @@ jobs:
       - name: Integration tests 
         run: curl http://localhost:8080/api/health
 
+      - name: Print logs
+        if: failure()
+        run: sudo cat /var/log/unit.log
+
+
   docker_build:
     name: Docker build
     runs-on: ubuntu-20.04
