@@ -178,6 +178,15 @@ def unitConfig(buildPath: File) =
       },
       "type": "external",
       "executable": "${buildPath / "twotm8"}",
+      ${sys.env
+      .get("CI")
+      .map { _ =>
+        """
+        "user": "runner",
+        "group": "docker",
+        """
+      }
+      .getOrElse("")}
       "environment": {
         "JWT_SECRET": "secret"
       },
