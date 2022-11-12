@@ -120,14 +120,16 @@ val buildBackend = taskKey[Unit]("")
 buildBackend := {
   val target = (app / Compile / nativeLink).value
 
-  val destination = (ThisBuild / baseDirectory).value / "build"
+  val destination = (ThisBuild / baseDirectory).value / "build" / "twotm8"
 
   IO.copyFile(
     target,
-    destination / "twotm8",
+    destination,
     preserveExecutable = true,
     preserveLastModified = true
   )
+
+  process.Process(s"chmod 0755 ${destination}").!!
 
   restartLocalUnit.value
 }
