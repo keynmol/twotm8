@@ -72,6 +72,8 @@ jobs:
         run: 
           sudo cat /var/log/unit.log
 
+          echo $PWD
+
           ls -la build
 
 

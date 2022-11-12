@@ -129,7 +129,7 @@ buildBackend := {
     preserveLastModified = true
   )
 
-  process.Process(s"chmod 0755 ${destination}").!!
+  process.Process(s"chmod 0777 ${destination}").!!
 
   restartLocalUnit.value
 }
