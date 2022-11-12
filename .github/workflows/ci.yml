@@ -16,7 +16,6 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       LLVM_BIN: /usr/lib/llvm-13/bin
-      SBTN: "sbt --client"
     steps:
       - uses: actions/checkout@v3
 
@@ -61,12 +60,9 @@ jobs:
         run: sudo ./scripts/setup-debian.sh
 
       - name: Start application
-        run: $SBTN buildApp
+        run: sbt buildApp test
         env:
           USE_SUDO: true
-
-      - name: Run tests 
-        run: $SBTN test
 
       - name: Integration tests 
         run: curl http://localhost:8080/api/health

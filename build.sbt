@@ -200,21 +200,21 @@ restartLocalUnit := {
 
   val f = new File(unixSocketPath)
 
+  assert(f.exists(), s"Expected Unix socket file for Nginx Unit `${f}` to exist")
+
   sLog.value.info(s"Unit socket path: $unixSocketPath")
 
   val configJson = writeConfig.value
 
-  val sudo = if(sys.env.contains("USE_SUDO")) "sudo " else ""
+  val sudo = if (sys.env.contains("USE_SUDO")) "sudo " else ""
 
-  if (f.exists()) {
-    val cmd_create =
-      s"${sudo}curl -X PUT --data-binary @$configJson --unix-socket $unixSocketPath http://localhost/config"
-    val cmd =
-      s"${sudo}curl --unix-socket $unixSocketPath http://localhost/control/applications/app/restart"
+  val cmd_create =
+    s"${sudo}curl -X PUT --data-binary @$configJson --unix-socket $unixSocketPath http://localhost/config"
+  val cmd =
+    s"${sudo}curl --unix-socket $unixSocketPath http://localhost/control/applications/app/restart"
 
-    println(process.Process(cmd_create).!!)
-    println(process.Process(cmd).!!)
-  }
+  println(process.Process(cmd_create).!!)
+  println(process.Process(cmd).!!)
 }
 
 lazy val writeConfig = taskKey[File]("")
