@@ -61,7 +61,7 @@ jobs:
         run: |
           docker build -f Dockerfile.lean . -t twotm8-runtime
           mkdir -p logs
-          docker run -p 8080:8080 -v $PWD/logs:/var/log -e JWT_SECRET=secret --network host twotm8-runtime 
+          docker run -d -p 8080:8080 -v $PWD/logs:/var/log -e JWT_SECRET=secret --network host twotm8-runtime 
 
       - name: Integration tests 
         run: curl http://localhost:8080/api/health
