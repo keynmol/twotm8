@@ -1,8 +1,7 @@
 package twotm8
 package db
 
-import roach.Codec
-import roach.Database
+import roach.*
 
 import java.util.UUID
 import scala.scalanative.unsafe.*
@@ -72,11 +71,11 @@ object DB:
     def get_wall(authorId: AuthorId): Vector[Twot] =
       db.withLease(get_wall_query.all(authorId, twotCodec))
 
-    def create_twot(authorId: AuthorId, text: Text): Option[TwotId] = 
+    def create_twot(authorId: AuthorId, text: Text): Option[TwotId] =
       db.withLease(create_twot_query.one(authorId -> text, uuid.wrap(TwotId)))
 
-    def delete_twot(authorId: AuthorId, twotId: TwotId): Unit =
-      db.withLease(delete_twot_query.exec(authorId -> twotId))
+    def delete_twot(authorId: AuthorId, twot: TwotId): Unit =
+      db.withLease(delete_twot_query.exec(authorId -> twot))
 
     def register(nickname: Nickname, pass: HashedPassword): Option[AuthorId] =
       db.withLease(
@@ -138,18 +137,21 @@ object DB:
     private val hashedPasswordCodec =
       bpchar.bimap(s => HashedPassword(s), _.ciphertext)
 
+    val authorId = uuid.wrap(AuthorId)
+    val twotId = uuid.wrap(TwotId)
+    val nickname = varchar.wrap(Nickname)
+    val twotText = varchar.wrap(Text)
+
     private val twotCodec =
-      (uuid.wrap(TwotId) ~
-        uuid.wrap(AuthorId) ~
-        varchar.wrap(Nickname) ~
-        varchar.wrap(Text) ~
+      (twotId ~
+        authorId ~
+        nickname ~
+        twotText ~
         int4.wrap(Uwotm8Count) ~
         bool.wrap(Uwotm8Status)).as[Twot]
 
     private val get_twots_query =
-      roach
-        .Query(
-          """
+      sql"""
           select 
             t.twot_id, 
             t.author_id, 
@@ -162,16 +164,13 @@ object DB:
             left outer join uwotm8_counts u on t.twot_id = u.twot_id 
             inner join thought_leaders a on t.author_id = a.thought_leader_id 
           where 
-            t.author_id = $1 
+            t.author_id = $authorId
           order by 
             t.added desc
-        """,
-          uuid.wrap(AuthorId)
-        )
+        """
 
     private val get_twots_perspective_query =
-      roach.Query(
-        """
+      sql"""
           select 
             t.twot_id, 
             t.author_id, 
@@ -184,35 +183,22 @@ object DB:
               left outer join uwotm8_counts u on t.twot_id = u.twot_id 
               inner join thought_leaders a on t.author_id = a.thought_leader_id 
               left outer join uwotm8s w on t.twot_id = w.twot_id 
-                                                    and w.author_id = $2 
+                                                    and w.author_id = $authorId
           where 
-            t.author_id = $1 
+            t.author_id = $authorId
           order by 
             t.added desc
-        """,
-        uuid.wrap(AuthorId) ~ uuid.wrap(AuthorId)
-      )
+        """
 
     private val get_thought_leader_credentials_query =
-      roach
-        .Query(
-          "select thought_leader_id, salted_hash from thought_leaders where lower(nickname) = lower($1::varchar)",
-          varchar.wrap(Nickname)
-        )
+      sql"""select thought_leader_id, salted_hash 
+                from thought_leaders where lower(nickname) = lower($nickname::varchar)"""
 
     private val get_thought_leader_by_id =
-      roach
-        .Query(
-          "select nickname from thought_leaders where thought_leader_id = $1",
-          uuid.wrap(AuthorId)
-        )
+      sql"select nickname from thought_leaders where thought_leader_id = $authorId"
 
     private val get_thought_leader_by_nickname =
-      roach
-        .Query(
-          "select thought_leader_id from thought_leaders where lower(nickname) = lower($1)",
-          varchar.wrap(Nickname)
-        )
+      sql"select thought_leader_id from thought_leaders where lower(nickname) = lower($nickname)"
 
     private val get_wall_query =
       roach
@@ -238,92 +224,58 @@ object DB:
           t.author_id = $1
         order by t.added desc
         """,
-          uuid.wrap(AuthorId)
+          authorId
         )
 
     private val create_twot_query =
-      roach
-        .Query(
-          """
+      sql"""
         insert into twots(twot_id, author_id, content, added) 
-                  values (gen_random_uuid(), $1, $2, NOW()) 
+                  values (gen_random_uuid(), $authorId, $twotText, NOW()) 
                   returning twot_id
-                  """,
-          uuid.wrap(AuthorId) ~ varchar.wrap(Text)
-        )
+                  """
 
     private val delete_twot_query =
-      roach.Query(
-        """delete from twots where author_id = $1 and twot_id = $2""",
-        uuid.wrap(AuthorId) ~ uuid.wrap(TwotId)
-      )
+      sql"""delete from twots where author_id = $authorId and twot_id = $twotId"""
 
     private val get_followers_query =
-      roach.Query(
+      sql"""
+        select follower from followers where leader_id = $authorId
         """
-        select follower from followers where leader_id = $1
-        """,
-        uuid.wrap(AuthorId)
-      )
 
     private val get_following_query =
-      roach
-        .Query(
-          """
-        select leader_id from followers where follower = $1
-        """,
-          uuid.wrap(AuthorId)
-        )
+      sql"""
+        select leader_id from followers where follower = $authorId
+        """
 
     private val add_uwotm8_query =
-      roach.Query(
-        """
+      sql"""
         insert into uwotm8s(author_id, twot_id)
-                  values ($1, $2)
+                  values (${authorId ~ twotId})
                   on conflict do nothing
                   returning 'ok'::text
-                  """,
-        uuid.wrap(AuthorId) ~ uuid.wrap(TwotId)
-      )
+                  """
 
     private val delete_uwotm8_query =
-      roach
-        .Query(
-          """delete from uwotm8s where author_id = $1 and twot_id = $2""",
-          uuid.wrap(AuthorId) ~ uuid.wrap(TwotId)
-        )
+      sql"""delete from uwotm8s where author_id = $authorId and twot_id = $twotId"""
 
     private val add_follower_query =
-      roach
-        .Query(
-          """
+      sql"""
         insert into followers(leader_id, follower) 
-                  values ($1, $2)
+                  values (${authorId ~ uuid.wrap(Follower)})
                   on conflict do nothing
                   returning 'ok'::text
-                  """,
-          uuid.wrap(AuthorId) ~ uuid.wrap(Follower)
-        )
+                  """
 
     private val delete_follower_query =
-      roach
-        .Query(
-          """delete from followers where leader_id = $1 and follower = $2""",
-          uuid.wrap(AuthorId) ~ uuid.wrap(Follower)
-        )
+      sql"""delete from followers where leader_id = $authorId and follower = ${uuid
+          .wrap(Follower)}"""
 
     private val register_thought_leader_query =
-      roach
-        .Query(
-          """
+      sql"""
         insert into thought_leaders(thought_leader_id, nickname, salted_hash) 
-                  values (gen_random_uuid(), lower($1), $2) 
+                  values (gen_random_uuid(), lower($nickname), $hashedPasswordCodec) 
                   on conflict do nothing
                   returning thought_leader_id
-                  """,
-          varchar.wrap(Nickname) ~
-            hashedPasswordCodec
-        )
-
+                  """
   end PostgresDB
 end DB

@@ -25,7 +25,7 @@ val Versions = new {
 
   val scalacss = "1.0.0"
 
-  val Roach = "0.0.1"
+  val Roach = "0.0.2"
 }
 
 lazy val root = project.in(file(".")).aggregate(frontend, app)
@@ -78,7 +78,8 @@ lazy val app =
       libraryDependencies += "com.github.lolgab" %%% "snunit-tapir" % Versions.SNUnit,
       libraryDependencies += "com.eed3si9n.verify" %%% "verify" % "1.0.0" % Test,
       libraryDependencies += "com.github.lolgab" %%% "scala-native-crypto" % "0.0.4" % Test,
-      testFrameworks += new TestFramework("verify.runner.Framework")
+      testFrameworks += new TestFramework("verify.runner.Framework"),
+      nativeConfig ~= (_.withEmbedResources(true).withDump(true))
     )
     .dependsOn(shared.native)
 
@@ -133,8 +134,8 @@ buildBackend := {
 
   sys.env.get("CI").foreach { _ =>
     val sudo = if (sys.env.contains("USE_SUDO")) "sudo " else ""
-    /* process.Process(s"${sudo}chown unit ${destination}").!! */
-    /* process.Process(s"${sudo}chgrp unit ${destination}").!! */
+  /* process.Process(s"${sudo}chown unit ${destination}").!! */
+  /* process.Process(s"${sudo}chgrp unit ${destination}").!! */
   }
 }
 
@@ -227,6 +228,8 @@ updateUnitConfiguration := {
   )
 
   sLog.value.info(s"Unit socket path: $unixSocketPath")
+
+  println(buildBackend.value)
 
   val configJson = writeConfig.value
 
