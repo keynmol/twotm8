@@ -11,7 +11,7 @@ val Versions = new {
 
   val SNUnit = "0.2.4"
 
-  val Tapir = "1.2.1"
+  val Tapir = "1.2.2"
 
   val upickle = "2.0.0"
 
