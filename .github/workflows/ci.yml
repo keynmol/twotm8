@@ -88,10 +88,10 @@ jobs:
           java-version: '17'
           cache: sbt
 
-      - uses: superfly/flyctl-actions@master
+      - uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Deploy to fly.io
-        run: flyctl deploy -c fly-staging.toml
+        run: "flyctl deploy -c fly-staging.toml"
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
@@ -110,9 +110,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: superfly/flyctl-actions@master
+      - uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Deploy to fly.io
-        run: flyctl deploy -c fly-production.toml
+        run: "flyctl deploy -c fly-production.toml"
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
