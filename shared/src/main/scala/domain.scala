@@ -68,11 +68,12 @@ object JWT extends OpaqueValue[JWT, String]
 
 trait OpaqueValue[T, X](using ap: T =:= X):
   self =>
-  inline def apply(s: X): T = ap.flip(s)
-  inline def value(t: T): X = ap(t)
-  extension (k: T)
+  inline def apply(inline s: X): T = s.asInstanceOf[T]
+  inline def value(inline t: T): X = t.asInstanceOf[X]
+
+  extension (inline k: T)
     inline def raw = ap(k)
-    inline def into[T1](other: OpaqueValue[T1, X]): T1 = other.apply(raw)
+    inline def into[T1](inline other: OpaqueValue[T1, X]): T1 = other.apply(raw)
     inline def update(inline f: X => X): T =
       apply(f(raw))
 end OpaqueValue

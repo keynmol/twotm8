@@ -13,6 +13,8 @@ import twotm8.db.DB
 import scala.concurrent.duration.*
 import scala.scalanative.unsafe.Zone
 import scala.util.Using
+import roach.Pool
+import roach.Migrate
 
 def connection_string() =
   sys.env.getOrElse(
@@ -27,33 +29,37 @@ def connection_string() =
     }
   )
 
-@main def launch =
-  val postgres = connection_string()
+object Main:
+  def main(args: Array[String]): Unit =
+    val postgres = connection_string()
 
-  scribe.Logger.root
-    .clearHandlers()
-    .withHandler(
-      writer = scribe.writer.SystemErrWriter,
-      outputFormat = scribe.output.format.ANSIOutputFormat
-    )
-    .replace()
+    scribe.Logger.root
+      .clearHandlers()
+      .withHandler(
+        writer = scribe.writer.SystemErrWriter,
+        outputFormat = scribe.output.format.ANSIOutputFormat
+      )
+      .replace()
 
-  Zone { implicit z =>
-    Using.resource(Database(postgres).getOrThrow) { pgConnection =>
-      given Settings = Settings(
-        tokenExpiration = 14.days,
-        secretKey = Secret(
-          sys.env.getOrElse[String](
-            "JWT_SECRET",
-            throw new Exception("Missing token configuration")
+    Zone { implicit z =>
+      Pool.single(postgres) { pool =>
+        given Settings = Settings(
+          tokenExpiration = 14.days,
+          secretKey = Secret(
+            sys.env.getOrElse[String](
+              "JWT_SECRET",
+              throw new Exception("Missing token configuration")
+            )
           )
         )
-      )
 
-      val app = App(DB.postgres(pgConnection))
-      val routes = api.Api(app).routes
+        Migrate.all(pool)(roach.ResourceFile("/V00001.Schema.sql"))
 
-      SyncServerBuilder.build(toHandler(routes)).listen()
+        val app = App(DB.postgres(pool))
+        val routes = api.Api(app).routes
+
+        SyncServerBuilder.build(toHandler(routes)).listen()
+      }
     }
-  }
-end launch
+  end main
+end Main

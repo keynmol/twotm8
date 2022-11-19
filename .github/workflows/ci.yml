@@ -16,7 +16,6 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       LLVM_BIN: /usr/lib/llvm-13/bin
-      SBTN: "sbt --client"
     steps:
       - uses: actions/checkout@v3
 
@@ -37,26 +36,39 @@ jobs:
           
       - uses: rui314/setup-mold@v1
 
+      - name: Setup Postgres
+        run: |
+          set -e
+          docker run -p 5432:5432 -e POSTGRES_PASSWORD=mysecretpassword -d postgres
+
       - name: Setup for Scala Native
         run: sudo ./scripts/setup-debian.sh
 
-      - name: Run tests 
-        run: $SBTN 'app/nativeLink; test'
+      - name: Build app
+        run: sbt buildApp
 
-  docker_build:
-    name: Docker build
-    runs-on: ubuntu-20.04
-    if: "!(startsWith(github.ref, 'refs/tags/v') || (github.ref == 'refs/heads/main'))"
-    steps:
-      - uses: actions/checkout@v3
+      - name: Start service in docker
+        run: |
+          docker build -f Dockerfile.lean . -t twotm8-runtime
+          mkdir -p logs
+          docker run -d -v $PWD/logs:/var/log -e JWT_SECRET=secret --network host twotm8-runtime 
 
-      - name: Docker build
-        run: docker build . -t twotm8
+      - name: Integration tests 
+        run: sbt integrationTests
+        env:
+          TWOTM8_URL: http://localhost:8080
+
+      - name: Print logs
+        if: failure()
+        shell: bash
+        run: |
+          sudo cat logs/*.log
+
 
   mergify_build_summary:
     name: Build summary
     runs-on: ubuntu-latest
-    needs: [build, docker_build]
+    needs: [build]
     steps:
       - name: I only exist to please Mergify :(
         run: echo "It's a sad existence but necessary"
