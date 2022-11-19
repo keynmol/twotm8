@@ -25,39 +25,41 @@ object AuthIntegrationTest extends BaseTest:
       yield expect(result.isRight)
     }
 
-    integrationTest("failure (nickname already taken)") { probe =>
-      for
-        nickname <- probe.generator.str(Nickname, 8 to 15)
-        password <- probe.generator.string(8 to 15).map(Password(_))
-        firstRegistration <-
-          probe.execute(
-            endpoints.register,
-            api.Payload.Register(nickname, password)
-          )
+    group("failure") {
+      integrationTest("nickname already taken") { probe =>
+        for
+          nickname <- probe.generator.str(Nickname, 8 to 15)
+          password <- probe.generator.string(8 to 15).map(Password(_))
+          firstRegistration <-
+            probe.execute(
+              endpoints.register,
+              api.Payload.Register(nickname, password)
+            )
 
-        _ <- expect(firstRegistration.isRight).failFast
+          _ <- expect(firstRegistration.isRight).failFast
 
-        secondRegistration <-
-          probe.execute(
-            endpoints.register,
-            api.Payload.Register(nickname, password)
-          )
+          secondRegistration <-
+            probe.execute(
+              endpoints.register,
+              api.Payload.Register(nickname, password)
+            )
 
-        _ <- expect(secondRegistration.isLeft).failFast
-      yield success
-    }
+          _ <- expect(secondRegistration.isLeft).failFast
+        yield success
+      }
 
-    integrationTest("failure (password too short)") { probe =>
-      for
-        nickname <- probe.generator.str(Nickname, 8 to 15)
-        password <- probe.generator.string(0 to 8).map(Password(_))
-        firstRegistration <-
-          probe.execute(
-            endpoints.register,
-            api.Payload.Register(nickname, password)
-          )
-        _ <- expect(firstRegistration.isLeft).failFast
-      yield success
+      integrationTest("password too short") { probe =>
+        for
+          nickname <- probe.generator.str(Nickname, 8 to 15)
+          password <- probe.generator.string(0 to 8).map(Password(_))
+          firstRegistration <-
+            probe.execute(
+              endpoints.register,
+              api.Payload.Register(nickname, password)
+            )
+          _ <- expect(firstRegistration.isLeft).failFast
+        yield success
+      }
     }
   }
 
@@ -67,22 +69,27 @@ object AuthIntegrationTest extends BaseTest:
         nickname <- probe.generator.str(Nickname, 8 to 15)
         password <- probe.generator.string(8 to 15).map(Password(_))
 
-        _ <-
+        result <-
           probe.execute(
             endpoints.register,
             api.Payload.Register(nickname, password)
-          )
-        result <- probe.execute(
-          endpoints.login,
-          api.Payload.Login(nickname, password)
-        )
+          ) *>
+            probe.execute(
+              endpoints.login,
+              api.Payload.Login(nickname, password)
+            )
 
-        token <- IO.fromEither(result.left.map(e => new Exception(e.message)))
-
-        decoded <- IO.fromTry(
-          pdi.jwt.JwtUpickle
-            .decode(token.jwt.raw, options = JwtOptions(signature = false))
-        )
+        decoded <-
+          IO.fromEither(result.left.map(e => new Exception(e.message)))
+            .flatMap { token =>
+              IO.fromTry(
+                pdi.jwt.JwtUpickle
+                  .decode(
+                    token.jwt.raw,
+                    options = JwtOptions(signature = false)
+                  )
+              )
+            }
       yield expect(decoded.issuer.contains("io:twotm8:token"))
     }
 
@@ -97,5 +104,24 @@ object AuthIntegrationTest extends BaseTest:
         )
       yield expect(result == Left(ErrorInfo.BadRequest("Invalid credentials")))
     }
+
+    integrationTest("failure (wrong password)") { probe =>
+      for
+        nickname <- probe.generator.str(Nickname, 8 to 15)
+        password <- probe.generator.string(8 to 15).map(Password(_))
+        wrongPassword = Password(password.process(_ + "!"))
+
+        result <-
+          probe.execute(
+            endpoints.register,
+            api.Payload.Register(nickname, password)
+          ) *>
+            probe.execute(
+              endpoints.login,
+              api.Payload.Login(nickname, wrongPassword)
+            )
+      yield expect(result == Left(ErrorInfo.BadRequest("Invalid credentials")))
+    }
   }
+
 end AuthIntegrationTest

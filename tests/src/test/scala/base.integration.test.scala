@@ -17,7 +17,7 @@ enum TestGroup:
   def testName(tn: weaver.TestName): weaver.TestName =
     this match
       case None      => tn
-      case Nested(s) => tn.copy(name = (s.mkString("", "-", ": ") + tn.name))
+      case Nested(s) => tn.copy(name = (s.mkString("", ".", ": ") + tn.name))
 
   def nest(nm: String) =
     this match
