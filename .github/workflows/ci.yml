@@ -64,7 +64,6 @@ jobs:
         run: |
           sudo cat logs/*.log
 
-
   mergify_build_summary:
     name: Build summary
     runs-on: ubuntu-latest
@@ -73,8 +72,8 @@ jobs:
       - name: I only exist to please Mergify :(
         run: echo "It's a sad existence but necessary"
 
-  deploy:
-    name: Deploy
+  deploy-staging:
+    name: Deploy staging
     needs: [build]
     if: startsWith(github.ref, 'refs/tags/v') || (github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
@@ -83,8 +82,37 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin' 
+          java-version: '17'
+          cache: sbt
+
       - uses: superfly/flyctl-actions@master
+
+      - name: Deploy to fly.io
+        run: flyctl deploy -c fly-staging.toml
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: End to end tests  
+        run: sbt integrationTests 
+        env:
+          TWOTM8_URL: https://twotm8-web-staging.fly.dev
+
+  deploy-production:
+    name: Deploy production
+    needs: [build, deploy-staging]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3 
         with:
-          args: "deploy"
+          fetch-depth: 0
+
+      - uses: superfly/flyctl-actions@master
+
+      - name: Deploy to fly.io
+        run: flyctl deploy -c fly-production.toml
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
