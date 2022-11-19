@@ -3,7 +3,7 @@ package twotm8
 import java.util.UUID
 import scala.scalanative.unsafe.*
 
-object TestAuth extends verify.BasicTestSuite:
+object TestAuth extends weaver.FunSuite:
   test("JWT: different settings produce different tokens") {
     import scala.concurrent.duration.*
     val settings1 = Settings(20.seconds, Secret("hello1"))

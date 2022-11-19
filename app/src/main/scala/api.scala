@@ -93,15 +93,8 @@ class Api(app: App):
 
   private def create_twot(auth: AuthContext)(createPayload: Payload.Create) =
     val text = createPayload.text.update(_.trim)
-    if (text.raw.length == 0) then
-      Left(ErrorInfo.BadRequest("Twot cannot be empty"))
-    else if (text.raw.length > 128) then
-      Left(
-        ErrorInfo.BadRequest(
-          s"Twot cannot be longer than 128 characters (you have ${text.raw.length})"
-        )
-      )
-    else
+
+    runValidator(text).map(e => Left(ErrorInfo.BadRequest(e))).getOrElse {
       app.create_twot(auth.author, text.update(_.toUpperCase)) match
         case None =>
           Left(
@@ -111,7 +104,7 @@ class Api(app: App):
           )
         case Some(_) =>
           Right(())
-    end if
+    }
   end create_twot
 
   private def delete_twot(auth: AuthContext)(twotId: TwotId): Unit =
@@ -125,32 +118,16 @@ class Api(app: App):
     else Left(ErrorInfo.ServerError())
 
   private def register(reg: Payload.Register) =
-    val length = reg.password.process(_.length)
-    val hasWhitespace = reg.password.process(_.exists(_.isWhitespace))
-    val nicknameHasWhitespace =
-      reg.nickname.raw.exists(_.isWhitespace)
-
-    if hasWhitespace then
-      Left(ErrorInfo.BadRequest("Password cannot contain whitespace symbols"))
-    else if length == 0 then
-      Left(ErrorInfo.BadRequest("Password cannot be empty"))
-    else if length < 8 then
-      Left(ErrorInfo.BadRequest("Password cannot be shorter than 8 symbols"))
-    else if length > 64 then
-      Left(ErrorInfo.BadRequest("Password cannot be longer than 64 symbols"))
-    else if reg.nickname.raw.length < 4 then
-      Left(ErrorInfo.BadRequest("Nickname cannot be shorter than 4 symbols"))
-    else if reg.nickname.raw.length > 32 then
-      Left(ErrorInfo.BadRequest("Nickname cannot be longer that 32 symbols"))
-    else if nicknameHasWhitespace then
-      Left(ErrorInfo.BadRequest("Nickname cannot have whitespace in it"))
-    else
-      app.register(reg.nickname, reg.password) match
-        case None =>
-          Left(ErrorInfo.BadRequest("This nickname is already taken"))
-        case Some(_) =>
-          Right(())
-    end if
+    runValidator(reg.nickname)
+      .orElse(runValidator(reg.password))
+      .map(err => Left(ErrorInfo.BadRequest(err)))
+      .getOrElse {
+        app.register(reg.nickname, reg.password) match
+          case None =>
+            Left(ErrorInfo.BadRequest("This nickname is already taken"))
+          case Some(_) =>
+            Right(())
+      }
   end register
 
   private def get_thought_leader(auth: Either[ErrorInfo, AuthContext])(

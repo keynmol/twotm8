@@ -36,16 +36,6 @@ jobs:
           
       - uses: rui314/setup-mold@v1
 
-      # - name: Install Nginx Unit
-      #   shell: bash
-      #   run: |
-      #     sudo curl --output /usr/share/keyrings/nginx-keyring.gpg https://unit.nginx.org/keys/nginx-keyring.gpg
-      #     sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/ubuntu/ focal unit" >> /etc/apt/sources.list.d/unit.list'
-      #     sudo sh -c 'echo "deb-src [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/ubuntu/ focal unit" >> /etc/apt/sources.list.d/unit.list'
-      #     sudo apt update
-      #     sudo apt install unit unit-dev
-      #     sudo systemctl restart unit
-
       - name: Setup Postgres
         run: |
           set -e
@@ -54,8 +44,8 @@ jobs:
       - name: Setup for Scala Native
         run: sudo ./scripts/setup-debian.sh
 
-      - name: Unit tests
-        run: sbt test buildApp
+      - name: Build app
+        run: sbt buildApp
 
       - name: Start service in docker
         run: |
@@ -64,7 +54,9 @@ jobs:
           docker run -d -v $PWD/logs:/var/log -e JWT_SECRET=secret --network host twotm8-runtime 
 
       - name: Integration tests 
-        run: curl http://localhost:8080/api/health
+        run: sbt integrationTests
+        env:
+          TWOTM8_URL: http://localhost:8080
 
       - name: Print logs
         if: failure()

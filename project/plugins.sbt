@@ -14,8 +14,8 @@ resolvers += Resolver.sonatypeRepo("snapshots")
 
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.6")
 addSbtPlugin("com.indoorvivants.vcpkg" % "sbt-vcpkg" % VcpkgVersion)
-addSbtPlugin("org.portable-scala" % "sbt-scala-native-crossproject" % "1.2.0")
-addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.2.0")
+addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.9.0")
+
 libraryDependencySchemes ++= Seq(
   "org.scala-native" % "sbt-scala-native" % VersionScheme.Always
 )

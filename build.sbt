@@ -6,12 +6,132 @@ import java.nio.file.Paths
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
+lazy val root = project
+  .in(file("."))
+  .aggregate(frontend.projectRefs*)
+  .aggregate(app.projectRefs*)
+  .aggregate(shared.projectRefs*)
+  .aggregate(tests.projectRefs*)
+  .aggregate(bindings.projectRefs*)
+
+lazy val shared =
+  projectMatrix
+    .in(file("shared"))
+    .jvmPlatform(Seq(Versions.Scala))
+    .jsPlatform(Seq(Versions.Scala))
+    .nativePlatform(Seq(Versions.Scala))
+    .settings(
+      scalaVersion := Versions.Scala,
+      libraryDependencies ++= Seq(
+        "com.softwaremill.sttp.tapir" %%% "tapir-json-upickle" % Versions.Tapir,
+        "com.softwaremill.sttp.tapir" %%% "tapir-core" % Versions.Tapir
+      )
+    )
+
+lazy val frontend =
+  projectMatrix
+    .in(file("frontend"))
+    .jsPlatform(Seq(Versions.Scala))
+    .settings(
+      scalaJSUseMainModuleInitializer := true,
+      scalaVersion := Versions.Scala,
+      libraryDependencies ++= Seq(
+        "com.github.japgolly.scalacss" %%% "core" % Versions.scalacss,
+        "com.lihaoyi" %%% "upickle" % Versions.upickle,
+        "com.raquo" %%% "laminar" % Versions.Laminar,
+        "com.raquo" %%% "waypoint" % Versions.waypoint,
+        "com.softwaremill.retry" %%% "retry" % Versions.sttpRetry,
+        "com.softwaremill.sttp.tapir" %%% "tapir-sttp-client" % Versions.Tapir,
+        "org.scala-js" %%% "scalajs-dom" % Versions.scalajsDom
+      )
+    )
+    .dependsOn(shared)
+
+lazy val tests =
+  projectMatrix
+    .in(file("tests"))
+    .dependsOn(shared)
+    .jvmPlatform(
+      Seq(Versions.Scala),
+      Seq.empty,
+      _.settings(
+        libraryDependencies ++= Seq(
+          "com.softwaremill.sttp.tapir" %% "tapir-http4s-client" % Versions.Tapir % Test,
+          "org.http4s" %% "http4s-ember-client" % Versions.Http4s % Test,
+          "com.github.jwt-scala" %% "jwt-upickle" % Versions.jwt % Test
+        )
+      )
+    )
+    .jsPlatform(Seq(Versions.Scala))
+    .nativePlatform(Seq(Versions.Scala))
+    .settings(
+      libraryDependencies ++= Seq(
+        "com.disneystreaming" %%% "weaver-cats" % Versions.weaver % Test
+      ),
+      testFrameworks += new TestFramework("weaver.framework.CatsEffect")
+    )
+
+lazy val set =
+  tests
+    .native(Versions.Scala)
+    .dependsOn(app.native(Versions.Scala))
+    .settings(
+      libraryDependencies +=
+        "com.github.lolgab" %%% "scala-native-crypto" % Versions.scalaNativeCrypto % Test
+    )
+
+lazy val app =
+  projectMatrix
+    .in(file("app"))
+    .nativePlatform(Seq(Versions.Scala))
+    .dependsOn(bindings, shared)
+    .enablePlugins(VcpkgPlugin)
+    .settings(environmentConfiguration)
+    .settings(vcpkgNativeConfig())
+    .settings(
+      scalaVersion := Versions.Scala,
+      vcpkgRootInit := com.indoorvivants.vcpkg.VcpkgRootInit.SystemCache(),
+      vcpkgDependencies := Set("libpq", "openssl", "libidn2"),
+      libraryDependencies ++= Seq(
+        "com.github.lolgab" %%% "scala-native-crypto" % Versions.scalaNativeCrypto % Test,
+        "com.github.lolgab" %%% "snunit-tapir" % Versions.SNUnit,
+        "com.indoorvivants.roach" %%% "core" % Versions.Roach,
+        "com.lihaoyi" %%% "upickle" % Versions.upickle,
+        "com.outr" %%% "scribe" % Versions.scribe
+      ),
+      nativeConfig ~= (_.withEmbedResources(true).withDump(true))
+    )
+
+lazy val bindings =
+  projectMatrix
+    .in(file("bindings"))
+    .nativePlatform(Seq(Versions.Scala))
+    .enablePlugins(BindgenPlugin, VcpkgPlugin)
+    .settings(
+      scalaVersion := Versions.Scala,
+      resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
+      vcpkgRootInit := com.indoorvivants.vcpkg.VcpkgRootInit.SystemCache(),
+      // Generate bindings to Postgres main API
+      vcpkgDependencies := Set("openssl"),
+      Compile / bindgenBindings ++= Seq(
+        Binding(
+          (ThisBuild / baseDirectory).value / "bindings" / "openssl-amalgam.h",
+          "openssl",
+          cImports = List("openssl/sha.h", "openssl/evp.h"),
+          clangFlags = List("-I" + vcpkgConfigurator.value.includes("openssl"))
+        )
+      )
+    )
+    .settings(vcpkgNativeConfig())
+
+addCommandAlias("integrationTests", "tests3/test")
+
 val Versions = new {
   val Scala = "3.2.1"
 
   val SNUnit = "0.2.4"
 
-  val Tapir = "1.2.1"
+  val Tapir = "1.2.2"
 
   val upickle = "2.0.0"
 
@@ -26,62 +146,17 @@ val Versions = new {
   val scalacss = "1.0.0"
 
   val Roach = "0.0.2"
+
+  val sttpRetry = "0.3.6"
+
+  val scalaNativeCrypto = "0.0.4"
+
+  val weaver = "0.8.0"
+
+  val Http4s = "0.23.16"
+
+  val jwt = "9.1.2"
 }
-
-lazy val root = project.in(file(".")).aggregate(frontend, app)
-
-lazy val shared =
-  crossProject(NativePlatform, JSPlatform)
-    .crossType(CrossType.Pure)
-    .settings(
-      scalaVersion := Versions.Scala,
-      libraryDependencies ++= Seq(
-        "com.softwaremill.sttp.tapir" %%% "tapir-json-upickle" % Versions.Tapir,
-        "com.softwaremill.sttp.tapir" %%% "tapir-core" % Versions.Tapir
-      )
-    )
-
-lazy val frontend =
-  project
-    .in(file("frontend"))
-    .enablePlugins(ScalaJSPlugin)
-    .settings(
-      scalaJSUseMainModuleInitializer := true,
-      scalaVersion := Versions.Scala,
-      libraryDependencies ++= Seq(
-        "com.raquo" %%% "laminar" % Versions.Laminar,
-        "org.scala-js" %%% "scalajs-dom" % Versions.scalajsDom,
-        "com.raquo" %%% "waypoint" % Versions.waypoint,
-        "com.lihaoyi" %%% "upickle" % Versions.upickle,
-        "com.softwaremill.sttp.tapir" %%% "tapir-sttp-client" % Versions.Tapir,
-        "com.softwaremill.retry" %%% "retry" % "0.3.6",
-        "com.github.japgolly.scalacss" %%% "core" % Versions.scalacss
-      )
-    )
-    .dependsOn(shared.js)
-
-lazy val app =
-  project
-    .in(file("app"))
-    .dependsOn(bindings)
-    .enablePlugins(ScalaNativePlugin, VcpkgPlugin)
-    .settings(environmentConfiguration)
-    .settings(vcpkgNativeConfig())
-    .settings(
-      scalaVersion := Versions.Scala,
-      vcpkgRootInit := com.indoorvivants.vcpkg.VcpkgRootInit.SystemCache(),
-      vcpkgDependencies := Set("libpq", "openssl", "libidn2"),
-      libraryDependencies += "com.indoorvivants.roach" %%% "core" % Versions.Roach,
-      libraryDependencies += "com.softwaremill.sttp.model" %%% "core" % "1.5.3",
-      libraryDependencies += "com.outr" %%% "scribe" % Versions.scribe,
-      libraryDependencies += "com.lihaoyi" %%% "upickle" % Versions.upickle,
-      libraryDependencies += "com.github.lolgab" %%% "snunit-tapir" % Versions.SNUnit,
-      libraryDependencies += "com.eed3si9n.verify" %%% "verify" % "1.0.0" % Test,
-      libraryDependencies += "com.github.lolgab" %%% "scala-native-crypto" % "0.0.4" % Test,
-      testFrameworks += new TestFramework("verify.runner.Framework"),
-      nativeConfig ~= (_.withEmbedResources(true).withDump(true))
-    )
-    .dependsOn(shared.native)
 
 lazy val environmentConfiguration = Seq(nativeConfig := {
   val conf = nativeConfig.value
@@ -89,27 +164,6 @@ lazy val environmentConfiguration = Seq(nativeConfig := {
     conf.withOptimize(true).withLTO(LTO.thin).withMode(Mode.releaseFast)
   else conf
 })
-
-lazy val bindings =
-  project
-    .in(file("bindings"))
-    .enablePlugins(ScalaNativePlugin, BindgenPlugin, VcpkgPlugin)
-    .settings(
-      scalaVersion := Versions.Scala,
-      resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
-      vcpkgRootInit := com.indoorvivants.vcpkg.VcpkgRootInit.SystemCache(),
-      // Generate bindings to Postgres main API
-      vcpkgDependencies := Set("openssl"),
-      Compile / bindgenBindings ++= Seq(
-        Binding(
-          (Compile / baseDirectory).value / "openssl-amalgam.h",
-          "openssl",
-          cImports = List("openssl/sha.h", "openssl/evp.h"),
-          clangFlags = List("-I" + vcpkgConfigurator.value.includes("openssl"))
-        )
-      )
-    )
-    .settings(vcpkgNativeConfig())
 
 val buildApp = taskKey[Unit]("")
 buildApp := {
@@ -119,7 +173,7 @@ buildApp := {
 
 val buildBackend = taskKey[Unit]("")
 buildBackend := {
-  val target = (app / Compile / nativeLink).value
+  val target = (app.native(Versions.Scala) / Compile / nativeLink).value
 
   val destination = (ThisBuild / baseDirectory).value / "build" / "twotm8"
 
@@ -229,7 +283,7 @@ updateUnitConfiguration := {
 
   sLog.value.info(s"Unit socket path: $unixSocketPath")
 
-  println(buildBackend.value)
+  sLog.value.info(buildBackend.value.toString)
 
   val configJson = writeConfig.value
 
@@ -266,9 +320,9 @@ writeConfig := {
 lazy val frontendFile = taskKey[File]("")
 frontendFile := {
   if (sys.env.get("SN_RELEASE").contains("fast"))
-    (frontend / Compile / fullOptJS).value.data
+    (frontend.js(Versions.Scala) / Compile / fullOptJS).value.data
   else
-    (frontend / Compile / fastOptJS).value.data
+    (frontend.js(Versions.Scala) / Compile / fastOptJS).value.data
 }
 
 lazy val buildFrontend = taskKey[Unit]("")
