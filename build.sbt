@@ -145,7 +145,7 @@ val Versions = new {
 
   val scalacss = "1.0.0"
 
-  val Roach = "0.0.2"
+  val Roach = "0.0.3"
 
   val sttpRetry = "0.3.6"
 
