@@ -135,7 +135,7 @@ val Versions = new {
 
   val upickle = "2.0.0"
 
-  val scribe = "3.10.5"
+  val scribe = "3.10.6"
 
   val Laminar = "0.14.5"
 
