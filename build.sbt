@@ -153,7 +153,7 @@ val Versions = new {
 
   val weaver = "0.8.1"
 
-  val Http4s = "0.23.16"
+  val Http4s = "0.23.18"
 
   val jwt = "9.1.2"
 }
