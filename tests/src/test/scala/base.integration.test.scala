@@ -1,4 +1,4 @@
-package twotm8 
+package twotm8
 package tests.integration
 
 import sttp.tapir.*
@@ -59,7 +59,9 @@ abstract class BaseTest extends weaver.IOSuite:
     Resource
       .eval(
         IO.fromOption(sys.env.get("TWOTM8_URL"))(
-          new RuntimeException("To run integration tests, please set TWOTM8_URL,\n like this: TWOTM8_URL=http://localhost:8080")
+          new RuntimeException(
+            "To run integration tests, please set TWOTM8_URL,\n like this: TWOTM8_URL=http://localhost:8080"
+          )
         )
       )
       .evalMap(r => IO.fromEither(Uri.fromString(r)))
