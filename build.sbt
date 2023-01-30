@@ -127,7 +127,7 @@ lazy val bindings =
 addCommandAlias("integrationTests", "tests3/test")
 
 val Versions = new {
-  val Scala = "3.2.1"
+  val Scala = "3.2.2"
 
   val SNUnit = "0.2.4"
 
