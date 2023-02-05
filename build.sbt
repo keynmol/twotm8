@@ -129,7 +129,7 @@ addCommandAlias("integrationTests", "tests3/test")
 val Versions = new {
   val Scala = "3.2.1"
 
-  val SNUnit = "0.2.4"
+  val SNUnit = "0.3.0"
 
   val Tapir = "1.2.3"
 
