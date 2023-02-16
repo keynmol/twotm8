@@ -155,7 +155,7 @@ val Versions = new {
 
   val Http4s = "0.23.16"
 
-  val jwt = "9.1.2"
+  val jwt = "9.2.0"
 }
 
 lazy val environmentConfiguration = Seq(nativeConfig := {
