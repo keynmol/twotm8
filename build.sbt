@@ -139,7 +139,7 @@ val Versions = new {
 
   val Laminar = "0.14.5"
 
-  val scalajsDom = "2.3.0"
+  val scalajsDom = "2.4.0"
 
   val waypoint = "0.5.0"
 
