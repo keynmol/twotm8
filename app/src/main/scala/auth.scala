@@ -46,7 +46,7 @@ object Auth:
 
               scribe.info(s"Expiration time: $exp, currentTime: $currentTime")
 
-              if (exp > currentTime) then
+              if exp > currentTime then
                 Some(AuthContext(AuthorId(UUID.fromString(id))))
               else None
             catch

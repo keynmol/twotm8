@@ -31,7 +31,7 @@ def Profile(page: Signal[Page.Profile])(using Router[Page])(using
       .map { case (followers, currentUser) =>
         currentUser
           .map { prof =>
-            if (followers.exists(follower => follower.raw == prof.id.raw)) then
+            if followers.exists(follower => follower.raw == prof.id.raw) then
               Yes
             else No
           }
