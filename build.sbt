@@ -133,7 +133,7 @@ val Versions = new {
 
   val Tapir = "1.2.3"
 
-  val upickle = "2.0.0"
+  val upickle = "3.0.0"
 
   val scribe = "3.10.5"
 
