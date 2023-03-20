@@ -141,7 +141,7 @@ val Versions = new {
 
   val scalajsDom = "2.3.0"
 
-  val waypoint = "0.5.0"
+  val waypoint = "6.0.0"
 
   val scalacss = "1.0.0"
 
