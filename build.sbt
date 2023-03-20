@@ -137,7 +137,7 @@ val Versions = new {
 
   val scribe = "3.10.5"
 
-  val Laminar = "0.14.5"
+  val Laminar = "15.0.0"
 
   val scalajsDom = "2.3.0"
 
