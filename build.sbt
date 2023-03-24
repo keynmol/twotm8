@@ -151,7 +151,7 @@ val Versions = new {
 
   val scalaNativeCrypto = "0.0.4"
 
-  val weaver = "0.8.1"
+  val weaver = "0.8.2"
 
   val Http4s = "0.23.16"
 
